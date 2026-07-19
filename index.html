@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tier Maker</title>
+<style>
+  :root{
+    --bg:#1a1a1a;
+    --panel:#242424;
+    --panel-2:#2b2b2b;
+    --line:#3a3a3a;
+    --text:#e8e8e8;
+    --muted:#9a9a9a;
+    --accent:#4a9eff;
+    --label-w:150px;
+    --row-min:96px;
+    --thumb:88px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:15px;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- Top toolbar ---------- */
+  #toolbar{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    padding:12px 16px;
+    background:var(--panel);
+    border-bottom:1px solid var(--line);
+    position:sticky;top:0;z-index:50;
+  }
+  #toolbar h1{
+    font-size:16px;font-weight:600;margin:0 12px 0 0;letter-spacing:.3px;
+  }
+  #titleInput{
+    background:transparent;border:none;color:var(--text);
+    font-size:16px;font-weight:600;padding:4px 6px;border-radius:6px;min-width:180px;
+  }
+  #titleInput:hover{background:var(--panel-2);}
+  #titleInput:focus{outline:1px solid var(--accent);background:var(--panel-2);}
+  .spacer{flex:1;}
+  button.tb{
+    background:var(--panel-2);color:var(--text);border:1px solid var(--line);
+    padding:7px 12px;border-radius:7px;cursor:pointer;font-size:13px;
+    display:inline-flex;align-items:center;gap:6px;transition:background .12s,border-color .12s;
+  }
+  button.tb:hover{background:#333;border-color:#555;}
+  button.tb.primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+  button.tb.primary:hover{background:#3b8bec;}
+  button.tb.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  /* ---------- Tier list ---------- */
+  #board{padding:16px;max-width:1600px;margin:0 auto;}
+  .tier{
+    display:flex;align-items:stretch;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-bottom:none;
+    min-height:var(--row-min);
+  }
+  .tier:first-child{border-top-left-radius:8px;border-top-right-radius:8px;}
+  .tier:last-child{border-bottom:1px solid var(--line);border-bottom-left-radius:8px;border-bottom-right-radius:8px;}
+
+  .tier-label{
+    width:var(--label-w);min-width:var(--label-w);
+    display:flex;align-items:center;justify-content:center;text-align:center;
+    padding:8px;position:relative;
+    color:#111;font-weight:700;
+  }
+  .tier-label textarea{
+    background:transparent;border:none;resize:none;text-align:center;
+    color:inherit;font-weight:700;font-size:20px;font-family:inherit;
+    width:100%;overflow:hidden;line-height:1.15;padding:0;
+  }
+  .tier-label textarea:focus{outline:none;}
+
+  .tier-row{
+    flex:1;display:flex;flex-wrap:wrap;align-content:flex-start;
+    gap:2px;padding:3px;min-height:var(--row-min);
+    background:#202020;
+  }
+  .tier-row.dragover{background:#2d3a4d;outline:2px dashed var(--accent);outline-offset:-2px;}
+
+  .tier-controls{
+    width:74px;min-width:74px;
+    background:#141414;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+    padding:6px;
+  }
+  .tier-controls .ctrl-row{display:flex;gap:6px;}
+  .tier-controls button{
+    background:transparent;border:none;color:#cfcfcf;cursor:pointer;
+    width:26px;height:26px;border-radius:5px;display:flex;align-items:center;justify-content:center;
+    font-size:15px;line-height:1;
+  }
+  .tier-controls button:hover{background:#2c2c2c;color:#fff;}
+  .tier-controls input[type=color]{
+    -webkit-appearance:none;appearance:none;border:none;background:none;
+    width:26px;height:26px;padding:0;cursor:pointer;border-radius:5px;overflow:hidden;
+  }
+  .tier-controls input[type=color]::-webkit-color-swatch-wrapper{padding:0;}
+  .tier-controls input[type=color]::-webkit-color-swatch{border:1px solid #555;border-radius:5px;}
+
+  /* ---------- Add tier ---------- */
+  #addTierWrap{max-width:1600px;margin:10px auto 0;padding:0 16px;}
+  #addTierBtn{
+    width:100%;background:var(--panel);border:1px dashed var(--line);color:var(--muted);
+    padding:10px;border-radius:8px;cursor:pointer;font-size:14px;
+  }
+  #addTierBtn:hover{background:var(--panel-2);color:var(--text);border-color:#555;}
+
+  /* ---------- Image pool ---------- */
+  #poolSection{max-width:1600px;margin:22px auto 60px;padding:0 16px;}
+  #poolHeader{display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap;}
+  #poolHeader h2{font-size:14px;font-weight:600;margin:0;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+  #pool{
+    display:flex;flex-wrap:wrap;gap:4px;
+    background:var(--panel);border:1px solid var(--line);border-radius:8px;
+    padding:8px;min-height:120px;align-content:flex-start;
+  }
+  #pool.dragover{background:#2d3a4d;outline:2px dashed var(--accent);outline-offset:-2px;}
+  #poolEmpty{color:var(--muted);font-size:13px;padding:24px;width:100%;text-align:center;}
+
+  /* ---------- Items ---------- */
+  .item{
+    width:var(--thumb);height:var(--thumb);
+    background:#111;border-radius:4px;overflow:hidden;
+    cursor:grab;position:relative;flex:0 0 auto;
+    display:flex;align-items:center;justify-content:center;
+    user-select:none;
+  }
+  .item img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;}
+  .item .cap{
+    position:absolute;left:0;right:0;bottom:0;
+    background:rgba(0,0,0,.6);color:#fff;font-size:10px;
+    padding:2px 3px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .item.dragging{opacity:.4;}
+  .item .del{
+    position:absolute;top:1px;right:1px;width:16px;height:16px;border-radius:50%;
+    background:rgba(0,0,0,.65);color:#fff;font-size:11px;line-height:16px;text-align:center;
+    cursor:pointer;display:none;
+  }
+  .item:hover .del{display:block;}
+  .item.placeholder-drop{outline:2px solid var(--accent);}
+
+  /* Recording mode: hide all editing chrome */
+  body.recording #toolbar,
+  body.recording .tier-controls,
+  body.recording #addTierWrap{display:none;}
+  body.recording .item .del{display:none !important;}
+  body.recording .tier-label textarea{pointer-events:none;}
+  body.recording #recBar{display:flex;}
+  /* Push all content below the slim bar so the bar can be cropped off cleanly */
+  body.recording{padding-top:32px;}
+
+  #recBar{
+    display:none;position:fixed;top:0;left:0;right:0;height:32px;z-index:200;
+    align-items:center;gap:12px;
+    padding:0 12px;
+    background:#0d0d0d;border-bottom:1px solid #333;
+    font-size:12px;color:#8a8a8a;
+  }
+  #recBarLabel{flex:1;}
+  #recExit{
+    background:transparent;color:#cfcfcf;border:1px solid #444;
+    padding:3px 12px;border-radius:5px;cursor:pointer;font-size:12px;
+  }
+  #recExit:hover{background:#222;color:#fff;border-color:#666;}
+
+  input[type=file]{display:none;}
+  .hint{color:var(--muted);font-size:12px;}
+  .tmpl{display:flex;align-items:center;gap:8px;margin-left:6px;}
+  #templateSelect{
+    background:var(--panel-2);color:var(--text);border:1px solid var(--line);
+    padding:7px 10px;border-radius:7px;font-size:13px;cursor:pointer;max-width:220px;
+  }
+  #templateSelect:hover{border-color:#555;}
+  #templateSelect optgroup{color:var(--muted);}
+  #templateSelect option{color:var(--text);background:var(--panel-2);}
+  .sizeControl{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px;}
+  .sizeControl input{cursor:pointer;}
+</style>
+</head>
+<body>
+
+<div id="toolbar">
+  <h1>🏆</h1>
+  <input id="titleInput" value="Untitled Tier List" spellcheck="false">
+  <div class="tmpl">
+    <select id="templateSelect" title="Load a template">
+      <option value="" disabled selected>Templates</option>
+    </select>
+    <button class="tb" id="saveTemplateBtn" title="Save current rows as a reusable template">☆ Save as Template</button>
+  </div>
+  <div class="spacer"></div>
+  <div class="sizeControl">Thumb
+    <input type="range" id="thumbSize" min="56" max="140" value="88">
+  </div>
+  <button class="tb" id="uploadBtn">＋ Add Images</button>
+  <button class="tb" id="resetBtn">Reset</button>
+  <button class="tb" id="exportBtn">🖼 Export PNG</button>
+  <button class="tb" id="saveBtn">💾 Save</button>
+  <button class="tb" id="loadBtn">📂 Load</button>
+  <button class="tb primary" id="recordBtn">● Recording Mode</button>
+</div>
+
+<div id="board"></div>
+
+<div id="addTierWrap">
+  <button id="addTierBtn">＋ Add Tier</button>
+</div>
+
+<div id="poolSection">
+  <div id="poolHeader">
+    <h2>Image Pool</h2>
+    <span class="hint">Drag images into tiers · drag back here to remove from a tier</span>
+    <div class="spacer"></div>
+    <button class="tb" id="uploadBtn2">＋ Add Images</button>
+    <button class="tb" id="clearPoolBtn">Clear Pool</button>
+  </div>
+  <div id="pool"></div>
+</div>
+
+<div id="recBar">
+  <span id="recBarLabel">Recording mode — crop this bar out of your capture</span>
+  <button id="recExit">✕ Exit</button>
+</div>
+
+<input type="file" id="fileInput" accept="image/*" multiple>
+<input type="file" id="loadFileInput" accept="application/json,.json">
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- State ----------
+  const DEFAULT_TIERS = [
+    {name:"S", color:"#ff7f7f"},
+    {name:"A", color:"#ffbf7f"},
+    {name:"B", color:"#ffdf7f"},
+    {name:"C", color:"#ffff7f"},
+    {name:"D", color:"#bfff7f"},
+  ];
+  const PALETTE = ["#ff7f7f","#ffbf7f","#ffdf7f","#ffff7f","#bfff7f","#7fff7f","#7fffff","#7fbfff","#bf7fff","#ff7fff","#cccccc","#888888"];
+
+  // Baked-in shared templates (ship with the app for every user).
+  const PRESET_TEMPLATES = [
+    {name:"Classic S–D", tiers:[
+      {name:"S",color:"#ff7f7f"},{name:"A",color:"#ffbf7f"},{name:"B",color:"#ffdf7f"},
+      {name:"C",color:"#ffff7f"},{name:"D",color:"#bfff7f"}]},
+    {name:"Full S–F", tiers:[
+      {name:"S",color:"#ff7f7f"},{name:"A",color:"#ffbf7f"},{name:"B",color:"#ffdf7f"},
+      {name:"C",color:"#ffff7f"},{name:"D",color:"#bfff7f"},{name:"E",color:"#7fffff"},{name:"F",color:"#7fbfff"}]},
+    {name:"10-Point Scale", tiers:[
+      {name:"10",color:"#ff6b6b"},{name:"9",color:"#ff9f68"},{name:"8",color:"#ffbf7f"},
+      {name:"7",color:"#ffdf7f"},{name:"6",color:"#ffff7f"},{name:"5",color:"#dfff7f"},
+      {name:"4",color:"#bfff7f"},{name:"3",color:"#9fff9f"},{name:"2",color:"#7fffbf"},{name:"1",color:"#7fdfff"}]},
+    {name:"Tier 1–5", tiers:[
+      {name:"Tier 1",color:"#ff7f7f"},{name:"Tier 2",color:"#ffbf7f"},{name:"Tier 3",color:"#ffff7f"},
+      {name:"Tier 4",color:"#bfff7f"},{name:"Tier 5",color:"#7fbfff"}]},
+    {name:"Price $–$$$$ (4 tier)", tiers:[
+      {name:"$$$$",color:"#ff7f7f"},{name:"$$$",color:"#ffbf7f"},
+      {name:"$$",color:"#ffff7f"},{name:"$",color:"#bfff7f"}]},
+    {name:"Price $–$$$ (3 tier)", tiers:[
+      {name:"$$$",color:"#ff7f7f"},{name:"$$",color:"#ffff7f"},{name:"$",color:"#bfff7f"}]},
+    {name:"Yes / Maybe / No", tiers:[
+      {name:"Yes",color:"#7fff7f"},{name:"Maybe",color:"#ffff7f"},{name:"No",color:"#ff7f7f"}]},
+    {name:"Pros / Neutral / Cons", tiers:[
+      {name:"Pros",color:"#7fff7f"},{name:"Neutral",color:"#cccccc"},{name:"Cons",color:"#ff7f7f"}]},
+    {name:"Blank (5 rows)", tiers:[
+      {name:"",color:"#ff7f7f"},{name:"",color:"#ffbf7f"},{name:"",color:"#ffff7f"},
+      {name:"",color:"#bfff7f"},{name:"",color:"#7fbfff"}]},
+  ];
+  const LS_KEY = "tiermaker_custom_templates_v1";
+
+  let state = {
+    title: "Untitled Tier List",
+    tiers: [],   // {id,name,color,items:[itemId,...]}
+    pool: [],    // itemId,...
+    images: {},  // itemId -> {id, src, name}
+  };
+  let uid = 1;
+  const nid = () => "i"+(uid++)+"_"+Math.random().toString(36).slice(2,7);
+
+  // ---------- DOM refs ----------
+  const board = document.getElementById("board");
+  const pool = document.getElementById("pool");
+  const titleInput = document.getElementById("titleInput");
+  const fileInput = document.getElementById("fileInput");
+  const loadFileInput = document.getElementById("loadFileInput");
+
+  // ---------- Init ----------
+  function init(){
+    state.tiers = DEFAULT_TIERS.map(t=>({id:nid(),name:t.name,color:t.color,items:[]}));
+    rebuildTemplateSelect();
+    render();
+  }
+
+  // ---------- Rendering ----------
+  function render(){
+    titleInput.value = state.title;
+    renderBoard();
+    renderPool();
+  }
+
+  function renderBoard(){
+    board.innerHTML = "";
+    state.tiers.forEach((tier, idx)=>{
+      const row = document.createElement("div");
+      row.className = "tier";
+      row.dataset.tierId = tier.id;
+
+      // label
+      const label = document.createElement("div");
+      label.className = "tier-label";
+      label.style.background = tier.color;
+      const ta = document.createElement("textarea");
+      ta.value = tier.name;
+      ta.rows = 1;
+      ta.spellcheck = false;
+      autoGrow(ta);
+      ta.addEventListener("input", ()=>{ tier.name = ta.value; autoGrow(ta); });
+      label.appendChild(ta);
+      row.appendChild(label);
+
+      // drop row
+      const dz = document.createElement("div");
+      dz.className = "tier-row";
+      dz.dataset.tierId = tier.id;
+      tier.items.forEach(itemId=>{
+        const el = makeItemEl(itemId);
+        if(el) dz.appendChild(el);
+      });
+      attachRowDnD(dz, tier);
+      row.appendChild(dz);
+
+      // controls
+      const ctrl = document.createElement("div");
+      ctrl.className = "tier-controls";
+      const colorInput = document.createElement("input");
+      colorInput.type = "color";
+      colorInput.value = toHex(tier.color);
+      colorInput.title = "Row color";
+      colorInput.addEventListener("input", ()=>{ tier.color = colorInput.value; label.style.background = colorInput.value; });
+
+      const r1 = document.createElement("div"); r1.className="ctrl-row";
+      const up = iconBtn("▲","Move up",()=>moveTier(idx,-1));
+      const down = iconBtn("▼","Move down",()=>moveTier(idx,1));
+      r1.append(up,down);
+
+      const r2 = document.createElement("div"); r2.className="ctrl-row";
+      const add = iconBtn("＋","Add tier below",()=>addTier(idx+1));
+      const del = iconBtn("🗑","Delete tier",()=>deleteTier(idx));
+      r2.append(add,del);
+
+      ctrl.append(colorInput, r1, r2);
+      row.appendChild(ctrl);
+
+      board.appendChild(row);
+      autoGrow(ta); // recompute once in the DOM so multi-line labels size correctly
+    });
+  }
+
+  function renderPool(){
+    pool.innerHTML = "";
+    if(state.pool.length === 0){
+      const empty = document.createElement("div");
+      empty.id = "poolEmpty";
+      empty.textContent = "No images yet — click “Add Images” to upload a pool of images to rank.";
+      pool.appendChild(empty);
+    } else {
+      state.pool.forEach(itemId=>{
+        const el = makeItemEl(itemId);
+        if(el) pool.appendChild(el);
+      });
+    }
+  }
+
+  function makeItemEl(itemId){
+    const img = state.images[itemId];
+    if(!img) return null;
+    const el = document.createElement("div");
+    el.className = "item";
+    el.draggable = true;
+    el.dataset.itemId = itemId;
+    el.title = img.name || "";
+    const im = document.createElement("img");
+    im.src = img.src;
+    im.alt = img.name || "";
+    el.appendChild(im);
+    if(img.name){
+      const cap = document.createElement("div");
+      cap.className = "cap";
+      cap.textContent = img.name;
+      el.appendChild(cap);
+    }
+    const del = document.createElement("div");
+    del.className = "del";
+    del.textContent = "×";
+    del.title = "Delete image";
+    del.addEventListener("click", (e)=>{ e.stopPropagation(); deleteImage(itemId); });
+    el.appendChild(del);
+
+    attachItemDnD(el, itemId);
+    return el;
+  }
+
+  // ---------- Item helpers ----------
+  function iconBtn(txt,title,fn){
+    const b=document.createElement("button");
+    b.textContent=txt;b.title=title;b.addEventListener("click",fn);return b;
+  }
+  function autoGrow(ta){ ta.style.height="auto"; ta.style.height=Math.max(24,ta.scrollHeight)+"px"; }
+  function toHex(c){
+    if(/^#[0-9a-f]{6}$/i.test(c)) return c;
+    // named / rgb -> canvas convert
+    const ctx=document.createElement("canvas").getContext("2d");
+    ctx.fillStyle=c; return ctx.fillStyle;
+  }
+
+  // ---------- Drag & Drop ----------
+  let dragItemId = null;
+
+  function attachItemDnD(el, itemId){
+    el.addEventListener("dragstart", (e)=>{
+      dragItemId = itemId;
+      el.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", itemId);
+    });
+    el.addEventListener("dragend", ()=>{
+      el.classList.remove("dragging");
+      dragItemId = null;
+      clearDragStyles();
+    });
+  }
+
+  function attachRowDnD(dz, tier){
+    dz.addEventListener("dragover", (e)=>{
+      e.preventDefault();
+      e.dataTransfer.dropEffect="move";
+      dz.classList.add("dragover");
+    });
+    dz.addEventListener("dragleave", (e)=>{
+      if(!dz.contains(e.relatedTarget)) dz.classList.remove("dragover");
+    });
+    dz.addEventListener("drop", (e)=>{
+      e.preventDefault();
+      dz.classList.remove("dragover");
+      const itemId = dragItemId || e.dataTransfer.getData("text/plain");
+      if(!itemId) return;
+      const beforeId = getDropTargetId(dz, e.clientX, e.clientY);
+      moveItemTo(itemId, {type:"tier", tierId:tier.id}, beforeId);
+    });
+  }
+
+  // pool as a drop zone
+  pool.addEventListener("dragover",(e)=>{ e.preventDefault(); e.dataTransfer.dropEffect="move"; pool.classList.add("dragover"); });
+  pool.addEventListener("dragleave",(e)=>{ if(!pool.contains(e.relatedTarget)) pool.classList.remove("dragover"); });
+  pool.addEventListener("drop",(e)=>{
+    e.preventDefault();
+    pool.classList.remove("dragover");
+    const itemId = dragItemId || e.dataTransfer.getData("text/plain");
+    if(!itemId) return;
+    const beforeId = getDropTargetId(pool, e.clientX, e.clientY);
+    moveItemTo(itemId, {type:"pool"}, beforeId);
+  });
+
+  function getDropTargetId(container, x, y){
+    const els = [...container.querySelectorAll(".item")].filter(el=>el.dataset.itemId!==dragItemId);
+    for(const el of els){
+      const r = el.getBoundingClientRect();
+      if(y < r.top + r.height && x < r.left + r.width/2 && y >= r.top){
+        return el.dataset.itemId;
+      }
+    }
+    // fallback: first item whose center is below the cursor row
+    for(const el of els){
+      const r=el.getBoundingClientRect();
+      if(y < r.top + r.height/2) return el.dataset.itemId;
+    }
+    return null;
+  }
+
+  function clearDragStyles(){
+    document.querySelectorAll(".dragover").forEach(el=>el.classList.remove("dragover"));
+  }
+
+  function removeItemEverywhere(itemId){
+    state.pool = state.pool.filter(id=>id!==itemId);
+    state.tiers.forEach(t=>{ t.items = t.items.filter(id=>id!==itemId); });
+  }
+
+  function moveItemTo(itemId, dest, beforeId){
+    removeItemEverywhere(itemId);
+    let arr;
+    if(dest.type==="pool") arr = state.pool;
+    else arr = state.tiers.find(t=>t.id===dest.tierId).items;
+    if(beforeId && beforeId!==itemId){
+      const i = arr.indexOf(beforeId);
+      if(i>=0){ arr.splice(i,0,itemId); }
+      else arr.push(itemId);
+    } else {
+      arr.push(itemId);
+    }
+    renderBoard();
+    renderPool();
+  }
+
+  // ---------- Tier actions ----------
+  function moveTier(idx, dir){
+    const j = idx+dir;
+    if(j<0||j>=state.tiers.length) return;
+    const [t] = state.tiers.splice(idx,1);
+    state.tiers.splice(j,0,t);
+    renderBoard();
+  }
+  function addTier(at){
+    const color = PALETTE[state.tiers.length % PALETTE.length];
+    const t = {id:nid(), name:"New", color, items:[]};
+    if(typeof at==="number") state.tiers.splice(at,0,t);
+    else state.tiers.push(t);
+    renderBoard();
+  }
+  function deleteTier(idx){
+    const t = state.tiers[idx];
+    if(t.items.length){ // move its items back to pool
+      state.pool.push(...t.items);
+    }
+    state.tiers.splice(idx,1);
+    if(state.tiers.length===0) state.tiers.push({id:nid(),name:"New",color:PALETTE[0],items:[]});
+    renderBoard();
+    renderPool();
+  }
+
+  // ---------- Images ----------
+  function addImages(files){
+    const list = [...files].filter(f=>f.type.startsWith("image/"));
+    let pending = list.length;
+    if(!pending) return;
+    list.forEach(file=>{
+      const reader = new FileReader();
+      reader.onload = ()=>{
+        const id = nid();
+        const name = file.name.replace(/\.[^.]+$/,"");
+        state.images[id] = {id, src:reader.result, name};
+        state.pool.push(id);
+        pending--;
+        if(pending===0) renderPool();
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+  function deleteImage(itemId){
+    removeItemEverywhere(itemId);
+    delete state.images[itemId];
+    renderBoard();
+    renderPool();
+  }
+
+  // ---------- Save / Load ----------
+  function save(){
+    state.title = titleInput.value;
+    const blob = new Blob([JSON.stringify(state)], {type:"application/json"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = (state.title||"tierlist").replace(/[^\w\-]+/g,"_") + ".tierlist.json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+  function loadFromObj(obj){
+    if(!obj||!obj.tiers) throw new Error("Invalid file");
+    state = obj;
+    // re-seed uid to avoid collisions
+    uid = Date.now()%1e6;
+    render();
+  }
+
+  // Load a project straight from a URL param, e.g.
+  //   ?project=spend-save-2026      -> fetches ./projects/spend-save-2026.json
+  //   ?project=https://.../foo.json -> fetches that exact URL
+  //   add &record=1 to open directly in recording mode
+  function loadProjectFromURL(){
+    const params = new URLSearchParams(location.search);
+    const p = params.get("project");
+    if(!p) return;
+    const url = /^https?:\/\//i.test(p) ? p : ("projects/" + p.replace(/\.json$/i,"") + ".json");
+    fetch(url)
+      .then(r=>{ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
+      .then(obj=>{
+        loadFromObj(obj);
+        if(params.get("record")==="1"){ if(!document.body.classList.contains("recording")) toggleRecording(); }
+      })
+      .catch(err=>{
+        flash("Couldn't open shared project: "+err.message);
+      });
+  }
+
+  // ---------- Export PNG ----------
+  // Renders by measuring the live DOM, so the export matches exactly what's
+  // on screen (including how images wrap). No external libraries needed.
+  function exportPNG(){
+    const tierEls = [...board.querySelectorAll(".tier")];
+    if(!tierEls.length){ flash("Nothing to export."); return; }
+
+    const firstLabel = tierEls[0].querySelector(".tier-label").getBoundingClientRect();
+    const firstRow   = tierEls[0].querySelector(".tier-row").getBoundingClientRect();
+    const originX = firstLabel.left;
+    const originY = tierEls[0].getBoundingClientRect().top;
+    const width   = firstRow.right - originX;
+    const lastRect = tierEls[tierEls.length-1].getBoundingClientRect();
+    const height  = lastRect.bottom - originY;
+
+    const scale = 2; // retina-quality output
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(width*scale);
+    canvas.height = Math.round(height*scale);
+    const ctx = canvas.getContext("2d");
+    ctx.scale(scale, scale);
+
+    ctx.fillStyle = "#202020";
+    ctx.fillRect(0,0,width,height);
+
+    tierEls.forEach((tierEl, i)=>{
+      const tier = state.tiers[i];
+      const tr = tierEl.getBoundingClientRect();
+      const lr = tierEl.querySelector(".tier-label").getBoundingClientRect();
+      const rr = tierEl.querySelector(".tier-row").getBoundingClientRect();
+      const y = tr.top - originY;
+
+      // label block
+      ctx.fillStyle = tier.color;
+      ctx.fillRect(lr.left-originX, y, lr.width, tr.height);
+
+      // label text (supports multiple lines)
+      ctx.fillStyle = "#111";
+      ctx.font = '700 20px -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      const lines = String(tier.name||"").split("\n");
+      const lh = 23;
+      const startY = y + tr.height/2 - ((lines.length-1)*lh)/2;
+      lines.forEach((ln,k)=>{
+        ctx.fillText(ln, lr.left-originX + lr.width/2, startY + k*lh, lr.width-12);
+      });
+
+      // row background
+      ctx.fillStyle = "#202020";
+      ctx.fillRect(rr.left-originX, y, rr.width, tr.height);
+
+      // items
+      tierEl.querySelectorAll(".tier-row .item").forEach(itemEl=>{
+        const ir = itemEl.getBoundingClientRect();
+        const dx = ir.left-originX, dy = ir.top-originY, dw = ir.width, dh = ir.height;
+        const img = itemEl.querySelector("img");
+
+        ctx.fillStyle = "#111";
+        ctx.fillRect(dx,dy,dw,dh);
+
+        if(img && img.complete && img.naturalWidth){
+          // replicate CSS object-fit: cover
+          const s = Math.max(dw/img.naturalWidth, dh/img.naturalHeight);
+          const sw = dw/s, sh = dh/s;
+          const sx = (img.naturalWidth - sw)/2, sy = (img.naturalHeight - sh)/2;
+          ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+        }
+
+        // caption bar, if the thumbnail shows one
+        const cap = itemEl.querySelector(".cap");
+        if(cap){
+          const ch = Math.min(14, dh*0.22);
+          ctx.fillStyle = "rgba(0,0,0,.6)";
+          ctx.fillRect(dx, dy+dh-ch, dw, ch);
+          ctx.fillStyle = "#fff";
+          ctx.font = '10px -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(cap.textContent, dx+dw/2, dy+dh-ch/2, dw-4);
+        }
+      });
+
+      // row separator
+      ctx.strokeStyle = "#3a3a3a";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, y+tr.height-0.5);
+      ctx.lineTo(width, y+tr.height-0.5);
+      ctx.stroke();
+    });
+
+    canvas.toBlob(blob=>{
+      if(!blob){ flash("Export failed."); return; }
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = (state.title||"tierlist").replace(/[^\w\-]+/g,"_") + ".png";
+      a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+      flash("PNG exported.");
+    }, "image/png");
+  }
+
+  // ---------- Templates ----------
+  function getCustomTemplates(){
+    try{ return JSON.parse(localStorage.getItem(LS_KEY)) || []; }
+    catch(e){ return []; }
+  }
+  function setCustomTemplates(list){
+    try{ localStorage.setItem(LS_KEY, JSON.stringify(list)); }
+    catch(e){ alert("Couldn't save template (browser storage unavailable)."); }
+  }
+  function rebuildTemplateSelect(){
+    const sel = document.getElementById("templateSelect");
+    sel.innerHTML = '<option value="" disabled selected>Templates</option>';
+
+    const og1 = document.createElement("optgroup");
+    og1.label = "Presets";
+    PRESET_TEMPLATES.forEach((t,i)=>{
+      const o=document.createElement("option"); o.value="p:"+i; o.textContent=t.name; og1.appendChild(o);
+    });
+    sel.appendChild(og1);
+
+    const custom = getCustomTemplates();
+    const og2 = document.createElement("optgroup");
+    og2.label = "My Templates";
+    if(custom.length===0){
+      const o=document.createElement("option"); o.value=""; o.disabled=true; o.textContent="(none saved yet)"; og2.appendChild(o);
+    } else {
+      custom.forEach((t,i)=>{
+        const o=document.createElement("option"); o.value="c:"+i; o.textContent=t.name; og2.appendChild(o);
+      });
+    }
+    sel.appendChild(og2);
+
+    const og3 = document.createElement("optgroup");
+    og3.label = "Manage";
+    const del=document.createElement("option"); del.value="__delete"; del.textContent="Delete a saved template…"; og3.appendChild(del);
+    sel.appendChild(og3);
+  }
+  function applyTemplate(tpl){
+    // Keep all images: move any placed items back to the pool, then rebuild tiers.
+    state.tiers.forEach(t=>{ if(t.items.length) state.pool.push(...t.items); });
+    state.tiers = tpl.tiers.map(t=>({id:nid(), name:t.name, color:t.color, items:[]}));
+    renderBoard();
+    renderPool();
+  }
+  function onTemplateSelect(){
+    const sel = document.getElementById("templateSelect");
+    const v = sel.value;
+    sel.value = ""; // reset back to label
+    if(!v) return;
+    if(v==="__delete"){ deleteTemplateFlow(); return; }
+    if(v.startsWith("p:")) applyTemplate(PRESET_TEMPLATES[+v.slice(2)]);
+    else if(v.startsWith("c:")) applyTemplate(getCustomTemplates()[+v.slice(2)]);
+  }
+  function saveCurrentAsTemplate(){
+    const suggested = (state.title && state.title!=="Untitled Tier List") ? state.title : "";
+    const name = prompt("Template name (rows + colours only, no images):", suggested);
+    if(name===null) return;
+    const trimmed = name.trim();
+    if(!trimmed){ alert("Please enter a name."); return; }
+    const list = getCustomTemplates();
+    const tpl = {name:trimmed, tiers: state.tiers.map(t=>({name:t.name, color:t.color}))};
+    const existing = list.findIndex(t=>t.name.toLowerCase()===trimmed.toLowerCase());
+    if(existing>=0){
+      if(!confirm('A template named "'+trimmed+'" exists. Overwrite it?')) return;
+      list[existing]=tpl;
+    } else list.push(tpl);
+    setCustomTemplates(list);
+    rebuildTemplateSelect();
+    flash('Template "'+trimmed+'" saved.');
+  }
+  function deleteTemplateFlow(){
+    const list = getCustomTemplates();
+    if(list.length===0){ alert("You have no saved templates to delete."); return; }
+    const names = list.map((t,i)=>(i+1)+". "+t.name).join("\n");
+    const pick = prompt("Delete which template? Enter its number:\n\n"+names);
+    if(pick===null) return;
+    const idx = parseInt(pick,10)-1;
+    if(isNaN(idx)||idx<0||idx>=list.length){ alert("Invalid number."); return; }
+    const removed = list.splice(idx,1)[0];
+    setCustomTemplates(list);
+    rebuildTemplateSelect();
+    flash('Deleted "'+removed.name+'".');
+  }
+  function flash(msg){
+    let el = document.getElementById("__flash");
+    if(!el){
+      el=document.createElement("div"); el.id="__flash";
+      el.style.cssText="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;z-index:300;box-shadow:0 4px 16px rgba(0,0,0,.4);opacity:0;transition:opacity .2s;";
+      document.body.appendChild(el);
+    }
+    el.textContent=msg; el.style.opacity="1";
+    clearTimeout(el.__t); el.__t=setTimeout(()=>{el.style.opacity="0";},1800);
+  }
+
+  // ---------- Recording mode ----------
+  function toggleRecording(){
+    document.body.classList.toggle("recording");
+    const on = document.body.classList.contains("recording");
+    document.getElementById("recordBtn").classList.toggle("active", on);
+  }
+
+  // ---------- Wire up ----------
+  titleInput.addEventListener("input", ()=>{ state.title = titleInput.value; });
+  document.getElementById("addTierBtn").addEventListener("click", ()=>addTier());
+  document.getElementById("uploadBtn").addEventListener("click", ()=>fileInput.click());
+  document.getElementById("uploadBtn2").addEventListener("click", ()=>fileInput.click());
+  fileInput.addEventListener("change", ()=>{ addImages(fileInput.files); fileInput.value=""; });
+  document.getElementById("clearPoolBtn").addEventListener("click", ()=>{
+    if(state.pool.length && confirm("Remove all images from the pool? (Images already placed in tiers stay.)")){
+      state.pool.forEach(id=>delete state.images[id]);
+      state.pool = [];
+      renderPool();
+    }
+  });
+  document.getElementById("resetBtn").addEventListener("click", ()=>{
+    if(confirm("Reset everything? This clears all tiers and images.")){
+      state = {title:"Untitled Tier List", tiers:[], pool:[], images:{}};
+      init();
+    }
+  });
+  document.getElementById("exportBtn").addEventListener("click", exportPNG);
+  document.getElementById("saveBtn").addEventListener("click", save);
+  document.getElementById("loadBtn").addEventListener("click", ()=>loadFileInput.click());
+  loadFileInput.addEventListener("change", ()=>{
+    const f = loadFileInput.files[0];
+    if(!f) return;
+    const r = new FileReader();
+    r.onload = ()=>{ try{ loadFromObj(JSON.parse(r.result)); }catch(err){ alert("Could not load file: "+err.message); } };
+    r.readAsText(f);
+    loadFileInput.value="";
+  });
+  document.getElementById("recordBtn").addEventListener("click", toggleRecording);
+  document.getElementById("recExit").addEventListener("click", toggleRecording);
+  document.getElementById("templateSelect").addEventListener("change", onTemplateSelect);
+  document.getElementById("saveTemplateBtn").addEventListener("click", saveCurrentAsTemplate);
+  document.getElementById("thumbSize").addEventListener("input", (e)=>{
+    document.documentElement.style.setProperty("--thumb", e.target.value+"px");
+  });
+
+  // Allow dropping image files anywhere onto the pool from OS
+  ["dragover","drop"].forEach(ev=>{
+    document.addEventListener(ev,(e)=>{
+      if(e.dataTransfer && [...e.dataTransfer.types].includes("Files")){
+        e.preventDefault();
+        if(ev==="drop") addImages(e.dataTransfer.files);
+      }
+    });
+  });
+
+  init();
+  loadProjectFromURL();
+})();
+</script>
+</body>
+</html>
