@@ -4,7 +4,6 @@ A single-file tier list tool for building ranking boards to screen record.
 No ads, no tracking, no backend — everything runs in the browser.
 
 **Live tool:** https://hpa-sam.github.io/tiermaker/
-*(fill this in once Pages is enabled)*
 
 ---
 
