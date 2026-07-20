@@ -5,8 +5,6 @@ No ads, no tracking, no backend — everything runs in the browser.
 
 **Live tool:** https://hpa-sam.github.io/tiermaker/
 
----
-
 ## For the team — how to use it
 
 1. Open the link above.
@@ -15,6 +13,15 @@ No ads, no tracking, no backend — everything runs in the browser.
 4. Drag images from the pool into the tiers. Drag back to the pool to unrank.
 5. Click **● Recording Mode** to hide all the editing controls, then screen record.
    A slim bar sits at the very top — crop that strip out of your capture.
+
+### Preview panel (for presenting)
+Click any image to load it large in the **Preview** panel on the right — useful for
+talking about an item before you rank it. The clicked image gets a blue highlight so
+viewers can see which one you mean. Dragging works exactly as before; clicking and
+dragging are independent.
+
+Works on pool images and ones already placed in tiers. **✕** clears the preview, and
+**👁 Preview** in the toolbar hides the panel for a full-width board.
 
 ### Exporting a still image
 **🖼 Export PNG** downloads the finished board as a single image at 2× resolution —
@@ -61,9 +68,27 @@ Optional extras:
 
 ```
 index.html            the entire tool (single self-contained file)
+preview.png           social card image used by Slack/Teams link previews
 projects/             saved .json projects, shareable via ?project=
 README.md             this file
 ```
+
+## One-time step after enabling Pages
+
+Open `index.html` and find the `og:image` / `og:url` meta tags near the top.
+Replace the relative values with your absolute Pages URL:
+
+```html
+<meta property="og:image" content="https://<user>.github.io/<repo>/preview.png">
+<meta property="og:url"   content="https://<user>.github.io/<repo>/">
+```
+
+Slack and Teams are inconsistent about resolving relative image paths, so absolute
+URLs are what make the preview card reliably show the image. Everything else works
+without this step.
+
+Note: link previews are generated from the static HTML, so **every** `?project=` link
+shows the same generic card — the card can't reflect an individual board's contents.
 
 ## Updating the tool
 
