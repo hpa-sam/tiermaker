@@ -17,7 +17,7 @@
 <meta property="og:title" content="Tier Maker">
 <meta property="og:description" content="Build tier list ranking boards for video. No ads, no bloat.">
 <meta property="og:image" content="preview.png">
-<meta property="og:url" content="./">
+<meta property="og:url" content="https://hpa-sam.github.io/tiermaker/">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Tier Maker">
 <meta name="twitter:description" content="Build tier list ranking boards for video. No ads, no bloat.">
@@ -45,13 +45,19 @@
     -webkit-font-smoothing:antialiased;
   }
 
-  /* ---------- Top toolbar ---------- */
+  /* ---------- Header (mode tabs + toolbar) ---------- */
+  #appHeader{position:sticky;top:0;z-index:50;}
+  #modeBar{
+    display:flex;align-items:stretch;
+    background:#141414;
+    border-bottom:1px solid var(--line);
+    padding:0 12px;
+  }
   #toolbar{
     display:flex;align-items:center;gap:10px;flex-wrap:wrap;
     padding:12px 16px;
     background:var(--panel);
     border-bottom:1px solid var(--line);
-    position:sticky;top:0;z-index:50;
   }
   #toolbar h1{
     font-size:16px;font-weight:600;margin:0 12px 0 0;letter-spacing:.3px;
@@ -81,8 +87,8 @@
   /* Columns. Board and buy-area grow; info and preview are fixed sidebars. */
   #col-board{flex:1;min-width:0;}
   #col-buy{flex:1;min-width:0;}
-  #col-budgetInfo{flex:0 0 340px;width:340px;position:sticky;top:88px;}
-  #rightCol{flex:0 0 340px;width:340px;position:sticky;top:88px;}
+  #col-budgetInfo{flex:0 0 340px;width:340px;position:sticky;top:var(--sticky-top,96px);}
+  #rightCol{flex:0 0 340px;width:340px;position:sticky;top:var(--sticky-top,96px);}
   /* Which columns show in which mode */
   #col-budgetInfo,#col-buy{display:none;}
   body.mode-budget #col-board{display:none;}
@@ -222,7 +228,7 @@
   .item.placeholder-drop{outline:2px solid var(--accent);}
 
   /* Recording mode: hide all editing chrome */
-  body.recording #toolbar,
+  body.recording #appHeader,
   body.recording .tier-controls,
   body.recording #addTierWrap{display:none;}
   body.recording .item .del{display:none !important;}
@@ -266,11 +272,7 @@
   .sizeControl{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px;}
   .sizeControl input{cursor:pointer;}
 
-  /* ---------- Mode toggle + budget input ---------- */
-  .modeToggle{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;margin-left:4px;}
-  .modeToggle button{background:var(--panel-2);color:var(--muted);border:none;padding:7px 12px;font-size:13px;cursor:pointer;}
-  .modeToggle button.active{background:var(--accent);color:#fff;}
-  .modeToggle button:not(.active):hover{background:#333;color:var(--text);}
+  /* ---------- Budget input ---------- */
   .budgetSet{display:none;align-items:center;gap:5px;color:var(--muted);font-size:13px;}
   .budgetSet input{
     width:110px;background:var(--panel-2);color:var(--text);border:1px solid var(--line);
@@ -288,15 +290,17 @@
   #buyArea.dragover{background:#2d3a4d;outline:2px dashed var(--accent);outline-offset:-2px;}
   #buyEmpty{color:var(--muted);font-size:14px;padding:44px 10px;width:100%;text-align:center;}
 
-  /* ---------- Price badge on thumbnails (budget mode only) ---------- */
+  /* ---------- Price badge on thumbnails (budget mode + draft w/ cap) ---------- */
   .item .price{display:none;}
-  body.mode-budget .item .price{
+  body.mode-budget .item .price,
+  body.mode-draft.draft-cap .item .price{
     display:block;position:absolute;top:2px;left:2px;
     background:rgba(0,0,0,.72);color:#7fff7f;font-size:11px;font-weight:700;
     padding:1px 5px;border-radius:4px;cursor:text;max-width:calc(100% - 6px);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   }
-  body.mode-budget .item .price.unset{color:#ffbf7f;}
+  body.mode-budget .item .price.unset,
+  body.mode-draft.draft-cap .item .price.unset{color:#ffbf7f;}
   body.recording .item .price{cursor:default;}
   .price-input{
     width:58px;font-size:11px;font-weight:700;border:none;border-radius:3px;
@@ -331,10 +335,181 @@
   .rc-remaining .rc-amt{color:#7fff7f;}
   .rc-remaining.neg .rc-amt{color:#ff6b6b;}
   #receiptEmpty{color:var(--muted);font-size:13px;text-align:center;padding:10px 0;}
+
+  /* ================= MULTI-MODE ================= */
+  .modeTabs{display:flex;gap:2px;}
+  .modeTab{
+    background:transparent;color:var(--muted);border:none;border-bottom:3px solid transparent;
+    padding:11px 18px;font-size:14px;cursor:pointer;white-space:nowrap;
+  }
+  .modeTab:hover{color:var(--text);}
+  .modeTab.active{color:#fff;border-bottom-color:var(--accent);font-weight:600;}
+
+  .draftSet{display:none;align-items:center;gap:5px;color:var(--muted);font-size:13px;}
+  body.mode-draft .draftSet{display:inline-flex;}
+  .draftSet input[type=number]{
+    width:100px;background:var(--panel-2);color:var(--text);border:1px solid var(--line);
+    border-radius:6px;padding:6px 8px;font-size:14px;font-weight:600;
+  }
+  body.mode-draft:not(.draft-cap) #draftCapWrap{display:none;}
+  body:not(.mode-tier) .tmpl{display:none;} /* templates are tier-only */
+
+  /* New stage columns */
+  #col-draftInfo,#col-ttInfo{flex:0 0 340px;width:340px;position:sticky;top:var(--sticky-top,96px);}
+  #col-bracket,#col-draft,#col-tt{flex:1;min-width:0;}
+  #col-bracket,#col-bracketPlay,#col-draftInfo,#col-draft,#col-ttInfo,#col-tt{display:none;}
+  body.mode-bracket #col-board,body.mode-draft #col-board,body.mode-thisthat #col-board{display:none;}
+  body.mode-bracket #rightCol{display:none;}   /* the matchup arena replaces preview */
+  body.mode-bracket #col-bracket{display:flex;flex-direction:column;flex:1.5;}
+  body.mode-bracket #col-bracketPlay{display:flex;flex-direction:column;flex:1;}
+  body.mode-draft #col-draftInfo,body.mode-draft #col-draft,
+  body.mode-thisthat #col-ttInfo,body.mode-thisthat #col-tt{display:flex;flex-direction:column;}
+  body.mode-bracket #stage,body.mode-draft #stage,body.mode-thisthat #stage{align-items:stretch;}
+  body.recording #col-draftInfo,body.recording #col-ttInfo,
+  body.recording #rightCol{top:44px;}
+
+  /* Shared info panel look (matches the receipt) */
+  .infoPanel{
+    flex:1;display:flex;flex-direction:column;
+    background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden;
+  }
+  .infoHead{
+    padding:14px 16px;border-bottom:1px solid var(--line);
+    font-size:20px;font-weight:700;color:var(--text);word-break:break-word;
+  }
+  .infoBody{flex:1;display:flex;flex-direction:column;padding:14px 16px 4px;}
+
+  /* Competitor chips (bracket & draft slots, champion, defeated) */
+  .chip{
+    display:flex;align-items:center;gap:8px;min-width:0;
+    background:#2b2b2b;border:1px solid var(--line);border-radius:6px;
+    padding:4px 8px 4px 4px;cursor:grab;user-select:none;max-width:100%;
+  }
+  .chip img{width:34px;height:34px;object-fit:cover;border-radius:4px;flex:0 0 auto;pointer-events:none;}
+  .chip-name{font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .chip.dragging{opacity:.4;}
+  .chip.selected{outline:2px solid var(--accent);outline-offset:-2px;}
+
+  .playArea{
+    flex:1;background:#202020;border:1px solid var(--line);border-radius:10px;
+    padding:10px;min-height:200px;
+  }
+
+  /* ---- Bracket ---- */
+  #bracketArea{display:flex;gap:26px;overflow-x:auto;align-items:stretch;}
+  .bkt-round{display:flex;flex-direction:column;min-width:184px;}
+  .bkt-round-head{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;text-align:center;margin-bottom:8px;}
+  .bkt-round-body{flex:1;display:flex;flex-direction:column;}
+  .bkt-match-wrap{flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;}
+  .bkt-match{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px;display:flex;flex-direction:column;gap:5px;}
+  .bkt-slot{min-height:44px;border:1px dashed #444;border-radius:6px;display:flex;align-items:center;padding:4px;}
+  .bkt-slot.dragover{background:#2d3a4d;border-color:var(--accent);}
+  .bkt-slot .placeholder{font-size:12px;color:#666;padding:0 6px;}
+  .bkt-slot.bkt-bye{justify-content:space-between;border-style:solid;border-color:#3a3a3a;background:#242424;}
+  .bkt-bye-tag{font-size:10px;color:#777;text-transform:uppercase;letter-spacing:.5px;padding-right:6px;white-space:nowrap;}
+  /* connectors: merge each pair of matches into the single next-round slot */
+  .bkt-round:not(:last-child) .bkt-match-wrap:nth-child(odd)::after{
+    content:"";position:absolute;right:-13px;top:50%;width:13px;height:50%;
+    border-right:2px solid #4a4a4a;border-top:2px solid #4a4a4a;
+  }
+  .bkt-round:not(:last-child) .bkt-match-wrap:nth-child(even)::after{
+    content:"";position:absolute;right:-13px;bottom:50%;width:13px;height:50%;
+    border-right:2px solid #4a4a4a;border-bottom:2px solid #4a4a4a;
+  }
+  .bkt-round:not(:first-child) .bkt-match-wrap::before{
+    content:"";position:absolute;left:-13px;top:50%;width:13px;height:2px;background:#4a4a4a;
+  }
+  #bracketEmpty{color:var(--muted);font-size:14px;text-align:center;padding:60px 10px;margin:auto;}
+  .btnWide{
+    margin:12px 16px 16px;padding:9px;border-radius:8px;cursor:pointer;font-size:13px;
+    background:var(--accent);color:#fff;border:none;font-weight:600;
+  }
+  .btnWide.secondary{background:var(--panel-2);color:var(--text);border:1px solid var(--line);font-weight:500;}
+  .btnWide:hover{filter:brightness(1.08);}
+
+  /* Bracket chart header + arena (click-to-advance) */
+  .infoHead.bkt-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  #bracketHead{font-size:20px;font-weight:700;color:var(--text);}
+  #bracketChampBadge{font-size:13px;font-weight:700;color:#ffd740;}
+  .bkt-head .spacer{flex:1;}
+  .bkt-head .tb{font-size:12px;padding:6px 10px;}
+  #bracketArea{flex:1;display:flex;gap:26px;align-items:stretch;overflow:auto;padding:16px;min-height:0;}
+  .bkt-match.bkt-current{border-color:var(--accent);box-shadow:0 0 0 2px rgba(74,158,255,.4);}
+  .bkt-slot.bkt-won{border-style:solid;border-color:#3f7d4f;background:#1e2a1f;}
+  #bracketArena{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;overflow:auto;}
+  .bkt-arena-cards{display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;}
+  .bkt-arena-cards .tt-card{width:100%;max-width:420px;}
+  #bracketArena .tt-img{height:200px;}
+  body.recording #bracketGenerate,body.recording #bracketRestart{display:none;}
+
+  /* Winner showcase overlay + fireworks */
+  #winnerOverlay{position:fixed;inset:0;z-index:400;display:none;align-items:center;justify-content:center;background:rgba(10,10,12,.86);}
+  #winnerOverlay.show{display:flex;}
+  #fireworksCanvas{position:absolute;inset:0;width:100%;height:100%;}
+  #winnerCard{
+    position:relative;z-index:1;text-align:center;background:var(--panel);border:1px solid var(--line);
+    border-radius:16px;padding:26px 34px;box-shadow:0 20px 60px rgba(0,0,0,.6);max-width:min(90vw,460px);
+  }
+  .winner-label{color:#ffd740;font-weight:800;letter-spacing:3px;font-size:15px;margin-bottom:14px;}
+  #winnerImg{max-width:100%;max-height:46vh;border-radius:10px;background:#fff;}
+  #winnerName{font-size:26px;font-weight:800;margin-top:14px;color:#fff;word-break:break-word;}
+  #winnerClose{margin-top:18px;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:14px;font-weight:600;cursor:pointer;}
+  #winnerClose:hover{filter:brightness(1.08);}
+
+  /* ---- Draft ---- */
+  #draftArea{display:flex;flex-direction:column;gap:8px;}
+  .draft-slot{display:flex;align-items:stretch;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px;}
+  .draft-slot-label{flex:0 0 150px;display:flex;align-items:center;}
+  .draft-slot-label input{
+    width:100%;background:transparent;border:none;color:var(--text);font-size:14px;font-weight:600;
+    padding:4px 6px;border-radius:5px;
+  }
+  .draft-slot-label input:hover{background:var(--panel-2);}
+  .draft-slot-label input:focus{outline:1px solid var(--accent);background:var(--panel-2);}
+  .draft-drop{flex:1;min-height:52px;border:1px dashed #444;border-radius:6px;display:flex;align-items:center;gap:8px;padding:5px;}
+  .draft-drop.dragover{background:#2d3a4d;border-color:var(--accent);}
+  .draft-drop .placeholder{color:#666;font-size:12px;padding:0 6px;}
+  .draft-price{margin-left:auto;font-size:13px;font-weight:700;color:#7fff7f;white-space:nowrap;padding-right:6px;}
+  .draft-slot-ctrl{display:flex;align-items:center;gap:2px;}
+  .draft-slot-ctrl button{background:transparent;border:none;color:#cfcfcf;cursor:pointer;width:24px;height:24px;border-radius:5px;font-size:13px;}
+  .draft-slot-ctrl button:hover{background:#2c2c2c;color:#fff;}
+  #draftAddSlot{align-self:flex-start;margin-top:4px;background:var(--panel);border:1px dashed var(--line);color:var(--muted);padding:8px 12px;border-radius:8px;cursor:pointer;font-size:13px;}
+  #draftAddSlot:hover{color:var(--text);border-color:#555;}
+
+  /* ---- This / That ---- */
+  #ttArena{
+    flex:1;display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap;
+    background:#202020;border:1px solid var(--line);border-radius:10px;padding:16px;min-height:220px;
+  }
+  .tt-card{flex:1 1 300px;max-width:440px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px;align-items:center;}
+  .tt-img{width:100%;height:260px;background:#151515;border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  .tt-img img{max-width:100%;max-height:100%;object-fit:contain;cursor:pointer;}
+  .tt-name{font-size:16px;font-weight:700;color:var(--text);text-align:center;word-break:break-word;}
+  .tt-pick{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:10px 18px;cursor:pointer;font-size:14px;font-weight:600;width:100%;}
+  .tt-pick:hover{filter:brightness(1.08);}
+  .tt-vs{font-size:22px;font-weight:800;color:var(--muted);flex:0 0 auto;}
+  .tt-msg{color:var(--muted);font-size:15px;text-align:center;padding:40px;}
+  .tt-champ-badge{font-size:12px;color:#7fff7f;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:4px;}
+
+  /* Recording mode: hide setup/editing chrome for the new modes (gameplay stays) */
+  body.recording .infoPanel .btnWide,
+  body.recording #draftAddSlot,
+  body.recording .draft-slot-ctrl{display:none;}
+  body.recording .draft-slot-label input{pointer-events:none;}
 </style>
 </head>
 <body>
 
+<header id="appHeader">
+<div id="modeBar">
+  <div class="modeTabs" role="tablist" title="Switch game mode">
+    <button class="modeTab active" data-mode="tier">Tier List</button>
+    <button class="modeTab" data-mode="budget">Budget</button>
+    <button class="modeTab" data-mode="bracket">Bracket</button>
+    <button class="modeTab" data-mode="draft">Draft</button>
+    <button class="modeTab" data-mode="thisthat">This / That</button>
+  </div>
+</div>
 <div id="toolbar">
   <h1>🏆</h1>
   <input id="titleInput" value="Untitled Tier List" spellcheck="false">
@@ -344,11 +519,9 @@
     </select>
     <button class="tb" id="saveTemplateBtn" title="Save current rows as a reusable template">☆ Save as Template</button>
   </div>
-  <div class="modeToggle" title="Switch between ranking and budget modes">
-    <button id="modeTier" class="active">Tier List</button>
-    <button id="modeBudget">Budget</button>
-  </div>
   <label class="budgetSet">Budget $<input id="budgetInput" type="number" min="0" step="1" value="1000"></label>
+  <label class="draftSet"><input type="checkbox" id="draftBudgetToggle"> Budget cap</label>
+  <label class="draftSet" id="draftCapWrap">$<input type="number" id="draftBudgetInput" min="0" step="1" value="1000"></label>
   <div class="spacer"></div>
   <div class="sizeControl">Thumb
     <input type="range" id="thumbSize" min="56" max="140" value="88">
@@ -361,6 +534,7 @@
   <button class="tb" id="loadBtn">📂 Load</button>
   <button class="tb primary" id="recordBtn">● Recording Mode</button>
 </div>
+</header>
 
 <div id="stage">
   <!-- Tier mode: the ranking board (flex-grows). Hidden in budget mode. -->
@@ -384,7 +558,50 @@
     <div id="buyArea"></div>
   </div>
 
-  <!-- RIGHT column: preview (shared by both modes). -->
+  <!-- BRACKET mode: left = the chart; right = the current matchup (this/that). -->
+  <div id="col-bracket">
+    <aside class="infoPanel">
+      <div class="infoHead bkt-head">
+        <span id="bracketHead">Bracket</span>
+        <span id="bracketChampBadge"></span>
+        <span class="spacer"></span>
+        <button class="tb" id="bracketGenerate">Generate from pool</button>
+        <button class="tb" id="bracketRestart">↺ Restart</button>
+      </div>
+      <div id="bracketArea"></div>
+    </aside>
+  </div>
+  <div id="col-bracketPlay">
+    <aside class="infoPanel">
+      <div class="infoHead" id="bracketArenaHead">Matchup</div>
+      <div id="bracketArena"></div>
+    </aside>
+  </div>
+
+  <!-- DRAFT mode: left = summary/cap; middle = positional slots. -->
+  <div id="col-draftInfo">
+    <aside class="infoPanel">
+      <div class="infoHead" id="draftHead">Draft</div>
+      <div class="infoBody" id="draftInfoBody"></div>
+    </aside>
+  </div>
+  <div id="col-draft">
+    <div class="playArea" id="draftArea"></div>
+  </div>
+
+  <!-- THIS/THAT mode: left = champion + defeated; middle = A vs B. -->
+  <div id="col-ttInfo">
+    <aside class="infoPanel">
+      <div class="infoHead" id="ttHead">This / That</div>
+      <div class="infoBody" id="ttInfoBody"></div>
+      <button class="btnWide secondary" id="ttReset">↺ Restart</button>
+    </aside>
+  </div>
+  <div id="col-tt">
+    <div id="ttArena"></div>
+  </div>
+
+  <!-- RIGHT column: preview (shared by all modes). -->
   <div id="rightCol">
     <aside id="previewPanel">
       <div id="previewHead">
@@ -414,6 +631,16 @@
 <div id="recBar">
   <span id="recBarLabel">Recording mode — crop this bar out of your capture</span>
   <button id="recExit">✕ Exit</button>
+</div>
+
+<div id="winnerOverlay">
+  <canvas id="fireworksCanvas"></canvas>
+  <div id="winnerCard">
+    <div class="winner-label">🏆 CHAMPION</div>
+    <img id="winnerImg" alt="">
+    <div id="winnerName"></div>
+    <button id="winnerClose">Close</button>
+  </div>
 </div>
 
 <input type="file" id="fileInput" accept="image/*" multiple>
@@ -463,13 +690,17 @@
   ];
   const LS_KEY = "tiermaker_custom_templates_v1";
 
+  const MODES = ["tier","budget","bracket","draft","thisthat"];
   let state = {
     title: "Untitled Tier List",
-    mode: "tier",       // "tier" | "budget"
-    budget: 1000,       // budget mode: starting budget
+    mode: "tier",       // one of MODES
+    budget: 1000,       // budget mode (and draft cap): starting budget
     tiers: [],          // {id,name,color,items:[itemId,...]}
     pool: [],           // itemId,...
     purchased: [],      // budget mode: itemIds bought
+    bracket: {size:0, rounds:[], championId:null}, // rounds[r] = [[a,b],...]
+    draft: {slots:[], budgetOn:false},             // slots: {id,label,itemId}
+    thisThat: {championId:null, challengerId:null, defeated:[]},
     images: {},         // itemId -> {id, src, name, price}
   };
   let uid = 1;
@@ -506,6 +737,14 @@
     applyModeClass();
     refresh();
     renderPreview();
+    updateHeaderOffset();
+  }
+
+  // Keep sticky columns tucked just below the (variable-height) header.
+  function updateHeaderOffset(){
+    const hdr = document.getElementById("appHeader");
+    if(!hdr) return;
+    document.documentElement.style.setProperty("--sticky-top", (hdr.offsetHeight + 8) + "px");
   }
 
   // Re-render everything that depends on where items live (used after drags,
@@ -515,14 +754,33 @@
     renderBuyArea();
     renderPool();
     renderReceipt();
+    renderBracket();
+    renderBracketArena();
+    renderDraft();
+    renderThisThat();
+  }
+
+  function defaultDraftSlots(){
+    return ["Engine","Forced Induction","Suspension","Wheels & Tyres","Brakes","Tuning"]
+      .map(l=>({id:nid(), label:l, itemId:null}));
   }
 
   // Fill in fields that may be missing (older saved files, fresh images).
   function normalizeState(){
-    if(state.mode!=="budget") state.mode = "tier";
+    if(!MODES.includes(state.mode)) state.mode = "tier";
     if(typeof state.budget!=="number" || isNaN(state.budget)) state.budget = 1000;
     if(!Array.isArray(state.purchased)) state.purchased = [];
+    if(!state.bracket || typeof state.bracket!=="object") state.bracket = {size:0, rounds:[], championId:null};
+    if(!Array.isArray(state.bracket.rounds)) state.bracket.rounds = [];
+    if(!state.thisThat || typeof state.thisThat!=="object") state.thisThat = {championId:null, challengerId:null, defeated:[]};
+    if(!Array.isArray(state.thisThat.defeated)) state.thisThat.defeated = [];
+    if(!state.draft || typeof state.draft!=="object") state.draft = {slots:[], budgetOn:false};
+    if(!Array.isArray(state.draft.slots) || state.draft.slots.length===0) state.draft.slots = defaultDraftSlots();
     Object.values(state.images).forEach(im=>{ if(!("price" in im)) im.price = null; });
+  }
+
+  function titleOr(def){
+    return (state.title && state.title!=="Untitled Tier List") ? state.title : def;
   }
 
   function fmtMoney(n){
@@ -531,13 +789,13 @@
   }
 
   function applyModeClass(){
-    const budget = state.mode==="budget";
-    document.body.classList.toggle("mode-budget", budget);
-    document.body.classList.toggle("mode-tier", !budget);
-    document.getElementById("modeTier").classList.toggle("active", !budget);
-    document.getElementById("modeBudget").classList.toggle("active", budget);
-    const bi = document.getElementById("budgetInput");
-    if(bi) bi.value = state.budget;
+    const m = state.mode;
+    MODES.forEach(x=>document.body.classList.toggle("mode-"+x, m===x));
+    document.body.classList.toggle("draft-cap", m==="draft" && !!state.draft.budgetOn);
+    document.querySelectorAll(".modeTab").forEach(b=>b.classList.toggle("active", b.dataset.mode===m));
+    const bi = document.getElementById("budgetInput"); if(bi) bi.value = state.budget;
+    const dc = document.getElementById("draftBudgetInput"); if(dc) dc.value = state.budget;
+    const dt = document.getElementById("draftBudgetToggle"); if(dt) dt.checked = !!state.draft.budgetOn;
   }
 
   function setMode(m){
@@ -689,6 +947,27 @@
     input.addEventListener("blur", commit);
   }
 
+  // A compact horizontal chip (thumb + name) for bracket/draft slots.
+  // Draggable and click-to-preview, just like a pool item.
+  function makeChip(itemId){
+    const img = state.images[itemId];
+    if(!img) return null;
+    const c = document.createElement("div");
+    c.className = "chip" + (itemId===selectedItemId ? " selected" : "");
+    c.draggable = true;
+    c.dataset.itemId = itemId;
+    c.title = img.name || "";
+    c.addEventListener("click", ()=>selectItem(itemId));
+    const im = document.createElement("img");
+    im.src = img.src; im.alt = img.name || "";
+    c.appendChild(im);
+    const nm = document.createElement("span");
+    nm.className = "chip-name"; nm.textContent = img.name || "";
+    c.appendChild(nm);
+    attachItemDnD(c, itemId);
+    return c;
+  }
+
   // ---------- Item helpers ----------
   function iconBtn(txt,title,fn){
     const b=document.createElement("button");
@@ -782,10 +1061,27 @@
     document.querySelectorAll(".dragover").forEach(el=>el.classList.remove("dragover"));
   }
 
+  // "Move zones" hold an item in exactly one place: pool, tiers, purchased, draft slots.
+  // (Bracket and This/That are reference zones and are NOT cleared here.)
   function removeItemEverywhere(itemId){
     state.pool = state.pool.filter(id=>id!==itemId);
     state.purchased = state.purchased.filter(id=>id!==itemId);
     state.tiers.forEach(t=>{ t.items = t.items.filter(id=>id!==itemId); });
+    if(state.draft && state.draft.slots) state.draft.slots.forEach(s=>{ if(s.itemId===itemId) s.itemId=null; });
+  }
+
+  // Clear an image out of the reference zones (bracket + This/That). Used on delete.
+  function purgeImageRefs(itemId){
+    if(state.bracket && state.bracket.rounds){
+      state.bracket.rounds.forEach(rd=>rd.forEach(m=>{ if(m[0]===itemId) m[0]=null; if(m[1]===itemId) m[1]=null; }));
+      if(state.bracket.championId===itemId) state.bracket.championId=null;
+    }
+    const tt = state.thisThat;
+    if(tt){
+      if(tt.championId===itemId) tt.championId=null;
+      if(tt.challengerId===itemId) tt.challengerId=null;
+      tt.defeated = (tt.defeated||[]).filter(id=>id!==itemId);
+    }
   }
 
   function moveItemTo(itemId, dest, beforeId){
@@ -843,13 +1139,14 @@
         state.images[id] = {id, src:reader.result, name, price:null};
         state.pool.push(id);
         pending--;
-        if(pending===0) renderPool();
+        if(pending===0) refresh(); // update the active mode too (e.g. auto-start This/That)
       };
       reader.readAsDataURL(file);
     });
   }
   function deleteImage(itemId){
     removeItemEverywhere(itemId);
+    purgeImageRefs(itemId);
     delete state.images[itemId];
     if(selectedItemId===itemId) selectedItemId = null;
     refresh();
@@ -923,6 +1220,407 @@
   }
   function rcHr(){ const h = document.createElement("div"); h.className = "rc-hr"; return h; }
 
+  // ---------- Bracket mode ----------
+  function bracketRoundName(matches){
+    if(matches===1) return "Final";
+    if(matches===2) return "Semifinals";
+    if(matches===4) return "Quarterfinals";
+    return "Round of " + (matches*2);
+  }
+  function generateBracketFromPool(){
+    const n = state.pool.length;
+    if(n < 2){ flash("Add at least 2 images to the pool first."); return; }
+    if(n > 32){ flash("Brackets support up to 32 images — remove " + (n-32) + " from the pool."); return; }
+    // A clean single-elimination bracket needs a power-of-two count (2/4/8/16/32).
+    if((n & (n-1)) !== 0){
+      let lo = 1; while(lo*2 <= n) lo *= 2;   // nearest power of two below
+      const hi = lo*2;
+      flash("A bracket needs 2, 4, 8, 16 or 32 images. You have " + n +
+            " — remove " + (n-lo) + " for a " + lo + "-slot bracket, or add " + (hi-n) + " for a " + hi + "-slot one.");
+      return;
+    }
+    const ids = state.pool.slice();
+    const size = n;
+    const M = size/2;
+    const r0 = [];
+    for(let k=0;k<M;k++) r0.push([ids[2*k], ids[2*k+1]]); // adjacent pool items face off
+    const rounds = [r0];
+    let matches = M/2;
+    while(matches >= 1){ rounds.push(Array.from({length:matches}, ()=>[null,null])); matches/=2; }
+    state.bracket = {size, rounds, championId:null};
+    refresh();
+    flash("Bracket built — " + size + " entrants.");
+  }
+  // Kept for older saved brackets that may contain byes; full brackets never trigger it.
+  function autoAdvanceByes(){
+    if(state.bracket.rounds.length < 2) return;
+    state.bracket.rounds[0].forEach((m,j)=>{
+      const present = [m[0],m[1]].filter(Boolean);
+      if(present.length===1) state.bracket.rounds[1][Math.floor(j/2)][j%2] = present[0];
+    });
+  }
+  // The chart is now a read-only scoreboard; picks happen in the matchup arena.
+  function renderBracket(){
+    document.getElementById("bracketHead").textContent = titleOr("Bracket");
+    const badge = document.getElementById("bracketChampBadge");
+    if(state.bracket.championId && state.images[state.bracket.championId]){
+      badge.style.display = ""; badge.textContent = "🏆 " + (state.images[state.bracket.championId].name || "Champion");
+    } else badge.style.display = "none";
+
+    const area = document.getElementById("bracketArea");
+    area.innerHTML = "";
+    if(!state.bracket.rounds.length){
+      const e = document.createElement("div"); e.id = "bracketEmpty";
+      e.textContent = "No bracket yet. Add 2, 4, 8, 16 or 32 images to the pool, then click “Generate from pool”.";
+      area.appendChild(e);
+      return;
+    }
+    const rounds = state.bracket.rounds;
+    const cur = bracketCurrentMatch();
+    rounds.forEach((matchesArr, r)=>{
+      const col = document.createElement("div"); col.className = "bkt-round";
+      const head = document.createElement("div"); head.className = "bkt-round-head";
+      head.textContent = bracketRoundName(matchesArr.length);
+      col.appendChild(head);
+      const body = document.createElement("div"); body.className = "bkt-round-body";
+      matchesArr.forEach((match, mi)=>{
+        const wrap = document.createElement("div"); wrap.className = "bkt-match-wrap";
+        const card = document.createElement("div"); card.className = "bkt-match";
+        if(cur && cur.r===r && cur.mi===mi) card.classList.add("bkt-current");
+        const winnerId = r < rounds.length-1 ? rounds[r+1][Math.floor(mi/2)][mi%2] : state.bracket.championId;
+        [0,1].forEach(ab=>{
+          const slot = document.createElement("div"); slot.className = "bkt-slot";
+          const id = match[ab];
+          if(id && state.images[id]){
+            slot.appendChild(makeChip(id));
+            if(id===winnerId) slot.classList.add("bkt-won");
+          } else {
+            const ph = document.createElement("div"); ph.className = "placeholder"; ph.textContent = r===0 ? "Seed" : "Winner"; slot.appendChild(ph);
+          }
+          card.appendChild(slot);
+        });
+        wrap.appendChild(card); body.appendChild(wrap);
+      });
+      col.appendChild(body); area.appendChild(col);
+    });
+  }
+
+  // First match (in play order) with both competitors present but no winner recorded.
+  function bracketCurrentMatch(){
+    const rounds = state.bracket.rounds;
+    for(let r=0;r<rounds.length;r++){
+      for(let mi=0;mi<rounds[r].length;mi++){
+        const m = rounds[r][mi];
+        if(m[0] && m[1] && state.images[m[0]] && state.images[m[1]]){
+          const decided = r < rounds.length-1 ? !!rounds[r+1][Math.floor(mi/2)][mi%2] : !!state.bracket.championId;
+          if(!decided) return {r, mi};
+        }
+      }
+    }
+    return null;
+  }
+
+  // Right-hand "this / that" arena for the current matchup.
+  function renderBracketArena(){
+    const arena = document.getElementById("bracketArena");
+    const head = document.getElementById("bracketArenaHead");
+    arena.innerHTML = "";
+    if(!state.bracket.rounds.length){
+      head.textContent = "Matchup";
+      const m = document.createElement("div"); m.className = "tt-msg";
+      m.textContent = "Generate a bracket to start the matchups."; arena.appendChild(m); return;
+    }
+    const cur = bracketCurrentMatch();
+    if(!cur){
+      if(state.bracket.championId && state.images[state.bracket.championId]){
+        head.textContent = "Champion";
+        const wrap = document.createElement("div"); wrap.className = "tt-card";
+        wrap.appendChild(ttImg(state.bracket.championId));
+        const nm = document.createElement("div"); nm.className = "tt-name"; nm.textContent = state.images[state.bracket.championId].name || "Champion"; wrap.appendChild(nm);
+        const wl = document.createElement("div"); wl.className = "tt-champ-badge"; wl.textContent = "🏆 Champion"; wrap.appendChild(wl);
+        const rb = document.createElement("button"); rb.className = "tt-pick"; rb.textContent = "Show celebration 🎆";
+        rb.addEventListener("click", ()=>showWinner(state.bracket.championId)); wrap.appendChild(rb);
+        arena.appendChild(wrap);
+      } else {
+        head.textContent = "Matchup";
+        const m = document.createElement("div"); m.className = "tt-msg"; m.textContent = "All matchups decided."; arena.appendChild(m);
+      }
+      return;
+    }
+    head.textContent = bracketRoundName(state.bracket.rounds[cur.r].length);
+    const stack = document.createElement("div"); stack.className = "bkt-arena-cards";
+    stack.appendChild(bracketCard(cur.r, cur.mi, 0));
+    const vs = document.createElement("div"); vs.className = "tt-vs"; vs.textContent = "VS"; stack.appendChild(vs);
+    stack.appendChild(bracketCard(cur.r, cur.mi, 1));
+    arena.appendChild(stack);
+  }
+  function bracketCard(r, mi, ab){
+    const id = state.bracket.rounds[r][mi][ab];
+    const card = document.createElement("div"); card.className = "tt-card";
+    card.appendChild(ttImg(id));
+    const nm = document.createElement("div"); nm.className = "tt-name"; nm.textContent = state.images[id].name || "Item"; card.appendChild(nm);
+    const btn = document.createElement("button"); btn.className = "tt-pick"; btn.textContent = "Pick this";
+    btn.addEventListener("click", ()=>pickBracketWinner(r, mi, ab));
+    card.appendChild(btn);
+    return card;
+  }
+  function pickBracketWinner(r, mi, ab){
+    const rounds = state.bracket.rounds;
+    const winner = rounds[r][mi][ab];
+    if(!winner) return;
+    if(r < rounds.length-1){ rounds[r+1][Math.floor(mi/2)][mi%2] = winner; }
+    else { state.bracket.championId = winner; }
+    refresh();
+    if(r === rounds.length-1) showWinner(winner); // final decided
+  }
+  function bracketRestart(){
+    if(!state.bracket.rounds.length) return;
+    for(let r=1;r<state.bracket.rounds.length;r++) state.bracket.rounds[r] = state.bracket.rounds[r].map(()=>[null,null]);
+    state.bracket.championId = null;
+    refresh();
+  }
+
+  // Generic reference-drop helper: calls onDrop(itemId) without moving the item.
+  function attachDropZone(el, onDrop){
+    el.addEventListener("dragover",(e)=>{ e.preventDefault(); e.dataTransfer.dropEffect="move"; el.classList.add("dragover"); });
+    el.addEventListener("dragleave",(e)=>{ if(!el.contains(e.relatedTarget)) el.classList.remove("dragover"); });
+    el.addEventListener("drop",(e)=>{
+      e.preventDefault(); el.classList.remove("dragover");
+      const id = dragItemId || e.dataTransfer.getData("text/plain");
+      if(id) onDrop(id);
+    });
+  }
+
+  // Generic reference-drop helper: calls onDrop(itemId) without moving the item.
+  function attachDropZone(el, onDrop){
+    el.addEventListener("dragover",(e)=>{ e.preventDefault(); e.dataTransfer.dropEffect="move"; el.classList.add("dragover"); });
+    el.addEventListener("dragleave",(e)=>{ if(!el.contains(e.relatedTarget)) el.classList.remove("dragover"); });
+    el.addEventListener("drop",(e)=>{
+      e.preventDefault(); el.classList.remove("dragover");
+      const id = dragItemId || e.dataTransfer.getData("text/plain");
+      if(id) onDrop(id);
+    });
+  }
+
+  // ---------- Draft mode ----------
+  function draftTotals(){
+    const spent = state.draft.slots.reduce((s,sl)=>{
+      const im = sl.itemId && state.images[sl.itemId];
+      return s + ((im && im.price) || 0);
+    }, 0);
+    return {spent, remaining: state.budget - spent};
+  }
+  function renderDraft(){
+    document.getElementById("draftHead").textContent = titleOr("Draft");
+    const info = document.getElementById("draftInfoBody");
+    info.innerHTML = "";
+    const filled = state.draft.slots.filter(s=>s.itemId).length;
+    info.appendChild(rcRow("Slots filled", filled + " / " + state.draft.slots.length));
+    if(state.draft.budgetOn){
+      const {remaining} = draftTotals();
+      const totals = document.createElement("div"); totals.className = "rc-totals";
+      totals.appendChild(rcHr());
+      totals.appendChild(rcRow("Budget", fmtMoney(state.budget), "rc-budget"));
+      const rem = rcRow("Remaining", fmtMoney(remaining), "rc-remaining");
+      if(remaining < 0) rem.classList.add("neg");
+      totals.appendChild(rem);
+      info.appendChild(totals);
+    }
+
+    const area = document.getElementById("draftArea");
+    area.innerHTML = "";
+    state.draft.slots.forEach((slot, idx)=>{
+      const row = document.createElement("div"); row.className = "draft-slot";
+      const lab = document.createElement("div"); lab.className = "draft-slot-label";
+      const inp = document.createElement("input"); inp.value = slot.label; inp.spellcheck = false;
+      inp.addEventListener("input", ()=>{ slot.label = inp.value; });
+      lab.appendChild(inp); row.appendChild(lab);
+
+      const drop = document.createElement("div"); drop.className = "draft-drop";
+      if(slot.itemId && state.images[slot.itemId]){
+        drop.appendChild(makeChip(slot.itemId));
+        if(state.draft.budgetOn){
+          const pr = document.createElement("div"); pr.className = "draft-price";
+          const p = state.images[slot.itemId].price;
+          pr.textContent = p==null ? "$—" : fmtMoney(p);
+          drop.appendChild(pr);
+        }
+      } else {
+        const ph = document.createElement("div"); ph.className = "placeholder"; ph.textContent = "Drag a pick here";
+        drop.appendChild(ph);
+      }
+      attachDropZone(drop, (id)=>draftAssign(slot.id, id));
+      row.appendChild(drop);
+
+      const ctrl = document.createElement("div"); ctrl.className = "draft-slot-ctrl";
+      ctrl.appendChild(iconBtn("▲","Move up",()=>moveDraftSlot(idx,-1)));
+      ctrl.appendChild(iconBtn("▼","Move down",()=>moveDraftSlot(idx,1)));
+      ctrl.appendChild(iconBtn("🗑","Remove slot",()=>removeDraftSlot(idx)));
+      row.appendChild(ctrl);
+      area.appendChild(row);
+    });
+
+    const add = document.createElement("button"); add.id = "draftAddSlot"; add.textContent = "＋ Add slot";
+    add.addEventListener("click", ()=>{ state.draft.slots.push({id:nid(), label:"New slot", itemId:null}); refresh(); });
+    area.appendChild(add);
+  }
+  function draftAssign(slotId, itemId){
+    const slot = state.draft.slots.find(s=>s.id===slotId);
+    if(!slot) return;
+    const prev = slot.itemId;
+    removeItemEverywhere(itemId);                 // leaves pool / any other slot
+    if(prev && prev!==itemId) state.pool.push(prev); // displaced pick returns to pool
+    slot.itemId = itemId;
+    refresh();
+  }
+  function moveDraftSlot(idx, dir){
+    const j = idx+dir; if(j<0||j>=state.draft.slots.length) return;
+    const [s] = state.draft.slots.splice(idx,1);
+    state.draft.slots.splice(j,0,s);
+    refresh();
+  }
+  function removeDraftSlot(idx){
+    const s = state.draft.slots[idx];
+    if(s.itemId) state.pool.push(s.itemId);
+    state.draft.slots.splice(idx,1);
+    if(state.draft.slots.length===0) state.draft.slots.push({id:nid(), label:"Slot", itemId:null});
+    refresh();
+  }
+
+  // ---------- This / That mode ----------
+  function ttEnsure(){
+    const tt = state.thisThat;
+    if(tt.championId && !state.images[tt.championId]) tt.championId = null;
+    if(tt.challengerId && !state.images[tt.challengerId]) tt.challengerId = null;
+    tt.defeated = (tt.defeated||[]).filter(id=>state.images[id]);
+    const used = new Set(tt.defeated);
+    if(tt.championId) used.add(tt.championId);
+    if(tt.challengerId) used.add(tt.challengerId);
+    if(!tt.championId){ const n = state.pool.find(id=>!used.has(id)); if(n){ tt.championId=n; used.add(n); } }
+    if(!tt.challengerId){ const n = state.pool.find(id=>!used.has(id)); if(n){ tt.challengerId=n; used.add(n); } }
+  }
+  function renderThisThat(){
+    ttEnsure();
+    const tt = state.thisThat;
+    document.getElementById("ttHead").textContent = titleOr("This / That");
+    const info = document.getElementById("ttInfoBody");
+    info.innerHTML = "";
+    if(tt.championId && state.images[tt.championId]){
+      const b = document.createElement("div"); b.className = "tt-champ-badge"; b.textContent = "Current champion";
+      info.appendChild(b);
+      info.appendChild(makeChip(tt.championId));
+    }
+    info.appendChild(rcHr());
+    const dh = document.createElement("div"); dh.className = "tt-champ-badge";
+    dh.style.color = "var(--muted)"; dh.textContent = "Defeated (" + tt.defeated.length + ")";
+    info.appendChild(dh);
+    if(tt.defeated.length===0){
+      const e = document.createElement("div"); e.style.cssText = "color:var(--muted);font-size:13px;padding:6px 0;";
+      e.textContent = "Nothing yet"; info.appendChild(e);
+    } else {
+      tt.defeated.forEach(id=>{ const im = state.images[id]; if(im) info.appendChild(rcRow(im.name||"Item", "✕")); });
+    }
+
+    const arena = document.getElementById("ttArena");
+    arena.innerHTML = "";
+    const a = tt.championId, b = tt.challengerId;
+    if(!a && !b){
+      const m = document.createElement("div"); m.className = "tt-msg";
+      m.textContent = "Add at least 2 images to the pool to start."; arena.appendChild(m); return;
+    }
+    if(a && !b){
+      const win = document.createElement("div"); win.className = "tt-card";
+      win.appendChild(ttImg(a));
+      const nm = document.createElement("div"); nm.className = "tt-name"; nm.textContent = state.images[a].name || "Winner"; win.appendChild(nm);
+      const wl = document.createElement("div"); wl.className = "tt-champ-badge"; wl.textContent = "🏆 Winner — beat everyone"; win.appendChild(wl);
+      arena.appendChild(win); return;
+    }
+    arena.appendChild(ttCard(a,"a"));
+    const vs = document.createElement("div"); vs.className = "tt-vs"; vs.textContent = "VS"; arena.appendChild(vs);
+    arena.appendChild(ttCard(b,"b"));
+  }
+  function ttImg(id){
+    const box = document.createElement("div"); box.className = "tt-img";
+    const im = document.createElement("img"); im.src = state.images[id].src;
+    im.addEventListener("click", ()=>selectItem(id));
+    box.appendChild(im); return box;
+  }
+  function ttCard(id, side){
+    const card = document.createElement("div"); card.className = "tt-card";
+    card.appendChild(ttImg(id));
+    const nm = document.createElement("div"); nm.className = "tt-name"; nm.textContent = state.images[id].name || "Item"; card.appendChild(nm);
+    const btn = document.createElement("button"); btn.className = "tt-pick"; btn.textContent = "Pick this";
+    btn.addEventListener("click", ()=>pickThisThat(side));
+    card.appendChild(btn);
+    return card;
+  }
+  function pickThisThat(side){
+    const tt = state.thisThat; const a = tt.championId, b = tt.challengerId;
+    if(!a || !b) return;
+    const winner = side==="a" ? a : b;
+    const loser = side==="a" ? b : a;
+    if(loser) tt.defeated.push(loser);
+    tt.championId = winner;
+    tt.challengerId = null;   // ttEnsure loads the next challenger
+    refresh();
+    // No challenger left and at least one beaten → this champion won it all.
+    if(!state.thisThat.challengerId && state.thisThat.defeated.length>0) showWinner(state.thisThat.championId);
+  }
+  function ttReset(){
+    state.thisThat = {championId:null, challengerId:null, defeated:[]};
+    refresh();
+  }
+
+  // ---------- Winner showcase (fireworks) ----------
+  let fwRAF = null, fwResize = null;
+  function showWinner(id){
+    const im = state.images[id];
+    if(!im) return;
+    document.getElementById("winnerImg").src = im.src;
+    document.getElementById("winnerName").textContent = im.name || "Champion";
+    document.getElementById("winnerOverlay").classList.add("show");
+    startFireworks();
+  }
+  function hideWinner(){
+    document.getElementById("winnerOverlay").classList.remove("show");
+    stopFireworks();
+  }
+  function startFireworks(){
+    const cv = document.getElementById("fireworksCanvas");
+    const ctx = cv.getContext("2d");
+    const resize = ()=>{ cv.width = window.innerWidth; cv.height = window.innerHeight; };
+    resize();
+    if(fwResize) window.removeEventListener("resize", fwResize);
+    fwResize = resize; window.addEventListener("resize", resize);
+    const colors = ["#ff5252","#ffd740","#69f0ae","#40c4ff","#e040fb","#ffffff"];
+    let parts = [], last = 0, launch = 0;
+    function burst(x,y){
+      const c = colors[Math.floor(Math.random()*colors.length)];
+      const n = 40 + Math.floor(Math.random()*30);
+      for(let i=0;i<n;i++){ const a = (Math.PI*2*i)/n, sp = 1 + Math.random()*3.5;
+        parts.push({x, y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, life:1, color:c}); }
+    }
+    function frame(t){
+      if(!last) last = t;
+      const dt = Math.min(3, (t-last)/16.67); last = t;
+      launch -= dt;
+      if(launch <= 0){ burst(cv.width*(0.15+Math.random()*0.7), cv.height*(0.15+Math.random()*0.45)); launch = 16 + Math.random()*22; }
+      ctx.clearRect(0,0,cv.width,cv.height);
+      parts.forEach(p=>{ p.vy += 0.03*dt; p.x += p.vx*dt; p.y += p.vy*dt; p.life -= 0.012*dt;
+        ctx.globalAlpha = Math.max(0,p.life); ctx.fillStyle = p.color;
+        ctx.beginPath(); ctx.arc(p.x, p.y, 2.2, 0, 6.2832); ctx.fill(); });
+      ctx.globalAlpha = 1;
+      parts = parts.filter(p=>p.life>0);
+      fwRAF = requestAnimationFrame(frame);
+    }
+    if(fwRAF) cancelAnimationFrame(fwRAF);
+    last = 0; parts = []; fwRAF = requestAnimationFrame(frame);
+  }
+  function stopFireworks(){
+    if(fwRAF) cancelAnimationFrame(fwRAF); fwRAF = null;
+    if(fwResize){ window.removeEventListener("resize", fwResize); fwResize = null; }
+  }
+
   // ---------- Save / Load ----------
   function save(){
     state.title = titleInput.value;
@@ -973,10 +1671,11 @@
     renderPreview();
   }
   function applySelectionStyles(){
-    document.querySelectorAll(".item.selected").forEach(el=>el.classList.remove("selected"));
+    document.querySelectorAll(".item.selected,.chip.selected").forEach(el=>el.classList.remove("selected"));
     if(!selectedItemId) return;
-    document.querySelectorAll('.item[data-item-id="'+selectedItemId+'"]')
-      .forEach(el=>el.classList.add("selected"));
+    document.querySelectorAll('[data-item-id="'+selectedItemId+'"]').forEach(el=>{
+      if(el.classList.contains("item") || el.classList.contains("chip")) el.classList.add("selected");
+    });
   }
   function renderPreview(){
     const img = document.getElementById("previewImg");
@@ -1005,6 +1704,10 @@
   // on screen (including how images wrap). No external libraries needed.
   function exportPNG(){
     if(state.mode==="budget"){ exportBudgetPNG(); return; }
+    if(state.mode!=="tier"){
+      flash("PNG export is available in Tier and Budget modes — use screen recording for the others.");
+      return;
+    }
     const tierEls = [...board.querySelectorAll(".tier")];
     if(!tierEls.length){ flash("Nothing to export."); return; }
 
@@ -1293,25 +1996,41 @@
   // ---------- Wire up ----------
   titleInput.addEventListener("input", ()=>{
     state.title = titleInput.value; syncDocTitle();
-    if(state.mode==="budget") renderReceipt(); // receipt header mirrors the title
+    // every mode's panel header mirrors the title
+    document.getElementById("receiptHead").textContent = titleOr("Budget");
+    document.getElementById("bracketHead").textContent = titleOr("Bracket");
+    document.getElementById("draftHead").textContent = titleOr("Draft");
+    document.getElementById("ttHead").textContent = titleOr("This / That");
   });
-  document.getElementById("modeTier").addEventListener("click", ()=>setMode("tier"));
-  document.getElementById("modeBudget").addEventListener("click", ()=>setMode("budget"));
+  document.querySelectorAll(".modeTab").forEach(b=>b.addEventListener("click", ()=>setMode(b.dataset.mode)));
   document.getElementById("budgetInput").addEventListener("input", (e)=>{
     const v = parseFloat(e.target.value);
     state.budget = isNaN(v) ? 0 : Math.max(0, Math.round(v));
     renderReceipt();
   });
+  document.getElementById("draftBudgetToggle").addEventListener("change", (e)=>{
+    state.draft.budgetOn = e.target.checked;
+    render(); // updates body.draft-cap so price badges show/hide
+  });
+  document.getElementById("draftBudgetInput").addEventListener("input", (e)=>{
+    const v = parseFloat(e.target.value);
+    state.budget = isNaN(v) ? 0 : Math.max(0, Math.round(v));
+    renderDraft();
+  });
+  document.getElementById("bracketGenerate").addEventListener("click", generateBracketFromPool);
+  document.getElementById("bracketRestart").addEventListener("click", bracketRestart);
+  document.getElementById("ttReset").addEventListener("click", ttReset);
+  document.getElementById("winnerClose").addEventListener("click", hideWinner);
   document.getElementById("addTierBtn").addEventListener("click", ()=>addTier());
   document.getElementById("uploadBtn").addEventListener("click", ()=>fileInput.click());
   document.getElementById("uploadBtn2").addEventListener("click", ()=>fileInput.click());
   fileInput.addEventListener("change", ()=>{ addImages(fileInput.files); fileInput.value=""; });
   document.getElementById("clearPoolBtn").addEventListener("click", ()=>{
-    if(state.pool.length && confirm("Remove all images from the pool? (Images already placed in tiers stay.)")){
-      state.pool.forEach(id=>delete state.images[id]);
+    if(state.pool.length && confirm("Remove all images from the pool? (Images already placed stay.)")){
+      state.pool.forEach(id=>{ delete state.images[id]; purgeImageRefs(id); });
       state.pool = [];
       if(selectedItemId && !state.images[selectedItemId]) selectedItemId = null;
-      renderPool();
+      refresh();
       renderPreview();
     }
   });
@@ -1354,6 +2073,8 @@
       }
     });
   });
+
+  window.addEventListener("resize", updateHeaderOffset);
 
   init();
   loadProjectFromURL();
