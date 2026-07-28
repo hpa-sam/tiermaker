@@ -16,12 +16,12 @@
 <meta property="og:type" content="website">
 <meta property="og:title" content="Tier Maker">
 <meta property="og:description" content="Build tier list ranking boards for video. No ads, no bloat.">
-<meta property="og:image" content="https://hpa-sam.github.io/tiermaker/preview.png">
-<meta property="og:url" content="https://hpa-sam.github.io/tiermaker/">
+<meta property="og:image" content="preview.png">
+<meta property="og:url" content="./">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Tier Maker">
 <meta name="twitter:description" content="Build tier list ranking boards for video. No ads, no bloat.">
-<meta name="twitter:image" content="https://hpa-sam.github.io/tiermaker/preview.png">
+<meta name="twitter:image" content="preview.png">
 <style>
   :root{
     --bg:#1a1a1a;
@@ -78,11 +78,20 @@
     display:flex;gap:16px;align-items:flex-start;
     max-width:1600px;margin:0 auto;padding:16px;
   }
-  #leftCol{flex:1;min-width:0;}
+  /* Columns. Board and buy-area grow; info and preview are fixed sidebars. */
+  #col-board{flex:1;min-width:0;}
+  #col-buy{flex:1;min-width:0;}
+  #col-budgetInfo{flex:0 0 340px;width:340px;position:sticky;top:88px;}
+  #rightCol{flex:0 0 340px;width:340px;position:sticky;top:88px;}
+  /* Which columns show in which mode */
+  #col-budgetInfo,#col-buy{display:none;}
+  body.mode-budget #col-board{display:none;}
+  body.mode-budget #col-budgetInfo{display:flex;flex-direction:column;}
+  body.mode-budget #col-buy{display:flex;flex-direction:column;}
+  /* Budget mode: balance all three columns to equal (tallest) height */
+  body.mode-budget #stage{align-items:stretch;}
   #previewPanel{
-    flex:0 0 340px;width:340px;
-    background:var(--panel);border:1px solid var(--line);border-radius:8px;
-    position:sticky;top:88px;overflow:hidden;
+    background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden;
   }
   #previewHead{
     display:flex;align-items:center;justify-content:space-between;
@@ -110,7 +119,7 @@
 
   @media (max-width:1100px){
     #stage{flex-direction:column;}
-    #previewPanel{width:100%;flex:1 1 auto;position:static;}
+    #rightCol,#col-budgetInfo{width:100%;flex:1 1 auto;position:static;}
   }
 
   /* ---------- Tier list ---------- */
@@ -224,7 +233,8 @@
   /* and the "click Add Images" empty-state, which shows once everything is ranked */
   body.recording #poolEmpty{display:none;}
   body.recording #poolSection{margin-top:12px;}
-  body.recording #previewPanel{top:44px;} /* clears the slim recording bar */
+  body.recording #rightCol,
+  body.recording #col-budgetInfo{top:44px;} /* clears the slim recording bar */
   body.recording #recBar{display:flex;}
   /* Push all content below the slim bar so the bar can be cropped off cleanly */
   body.recording{padding-top:32px;}
@@ -255,6 +265,72 @@
   #templateSelect option{color:var(--text);background:var(--panel-2);}
   .sizeControl{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px;}
   .sizeControl input{cursor:pointer;}
+
+  /* ---------- Mode toggle + budget input ---------- */
+  .modeToggle{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;margin-left:4px;}
+  .modeToggle button{background:var(--panel-2);color:var(--muted);border:none;padding:7px 12px;font-size:13px;cursor:pointer;}
+  .modeToggle button.active{background:var(--accent);color:#fff;}
+  .modeToggle button:not(.active):hover{background:#333;color:var(--text);}
+  .budgetSet{display:none;align-items:center;gap:5px;color:var(--muted);font-size:13px;}
+  .budgetSet input{
+    width:110px;background:var(--panel-2);color:var(--text);border:1px solid var(--line);
+    border-radius:6px;padding:6px 8px;font-size:14px;font-weight:600;
+  }
+  body.mode-budget .budgetSet{display:inline-flex;}
+  body.mode-budget .tmpl{display:none;} /* templates are tier-only */
+
+  /* ---------- Budget stage ---------- */
+  #buyArea{
+    flex:1;                 /* fill the middle column's height */
+    background:#202020;border:1px solid var(--line);border-radius:10px;
+    min-height:190px;padding:6px;display:flex;flex-wrap:wrap;gap:4px;align-content:flex-start;
+  }
+  #buyArea.dragover{background:#2d3a4d;outline:2px dashed var(--accent);outline-offset:-2px;}
+  #buyEmpty{color:var(--muted);font-size:14px;padding:44px 10px;width:100%;text-align:center;}
+
+  /* ---------- Price badge on thumbnails (budget mode only) ---------- */
+  .item .price{display:none;}
+  body.mode-budget .item .price{
+    display:block;position:absolute;top:2px;left:2px;
+    background:rgba(0,0,0,.72);color:#7fff7f;font-size:11px;font-weight:700;
+    padding:1px 5px;border-radius:4px;cursor:text;max-width:calc(100% - 6px);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  body.mode-budget .item .price.unset{color:#ffbf7f;}
+  body.recording .item .price{cursor:default;}
+  .price-input{
+    width:58px;font-size:11px;font-weight:700;border:none;border-radius:3px;
+    padding:1px 3px;font-family:inherit;
+  }
+
+  /* ---------- Receipt ---------- */
+  #receiptPanel{
+    flex:1;                 /* fill the left column's height */
+    display:flex;flex-direction:column;
+    background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden;
+  }
+  #receiptHead{
+    padding:14px 16px;border-bottom:1px solid var(--line);
+    font-size:20px;font-weight:700;color:var(--text);word-break:break-word;
+  }
+  #receiptBody{
+    flex:1;display:flex;flex-direction:column;
+    padding:14px 16px 16px;font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  /* Budget + Remaining pinned to the bottom edge of the column */
+  .rc-totals{margin-top:auto;}
+  .rc-row{display:flex;align-items:baseline;gap:8px;font-size:14px;padding:4px 0;}
+  .rc-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px;color:var(--text);}
+  .rc-dots{flex:1;border-bottom:1px dotted #555;position:relative;top:-4px;}
+  .rc-amt{white-space:nowrap;color:var(--text);font-weight:600;}
+  .rc-hr{border-top:1px solid var(--line);margin:10px 0;}
+  .rc-budget{font-size:19px;}
+  .rc-budget .rc-name,.rc-budget .rc-amt{font-weight:700;}
+  .rc-remaining{font-size:24px;margin-top:2px;}
+  .rc-remaining .rc-name,.rc-remaining .rc-amt{font-weight:800;}
+  .rc-remaining .rc-amt{color:#7fff7f;}
+  .rc-remaining.neg .rc-amt{color:#ff6b6b;}
+  #receiptEmpty{color:var(--muted);font-size:13px;text-align:center;padding:10px 0;}
 </style>
 </head>
 <body>
@@ -268,6 +344,11 @@
     </select>
     <button class="tb" id="saveTemplateBtn" title="Save current rows as a reusable template">☆ Save as Template</button>
   </div>
+  <div class="modeToggle" title="Switch between ranking and budget modes">
+    <button id="modeTier" class="active">Tier List</button>
+    <button id="modeBudget">Budget</button>
+  </div>
+  <label class="budgetSet">Budget $<input id="budgetInput" type="number" min="0" step="1" value="1000"></label>
   <div class="spacer"></div>
   <div class="sizeControl">Thumb
     <input type="range" id="thumbSize" min="56" max="140" value="88">
@@ -282,29 +363,47 @@
 </div>
 
 <div id="stage">
-  <div id="leftCol">
+  <!-- Tier mode: the ranking board (flex-grows). Hidden in budget mode. -->
+  <div id="col-board">
     <div id="board"></div>
     <div id="addTierWrap">
       <button id="addTierBtn">＋ Add Tier</button>
     </div>
   </div>
-  <aside id="previewPanel">
-    <div id="previewHead">
-      <span>Preview</span>
-      <button id="previewClear" title="Clear preview">✕</button>
-    </div>
-    <div id="previewBox">
-      <div id="previewEmpty">Click an image to preview it here</div>
-      <img id="previewImg" alt="">
-    </div>
-    <div id="previewName"></div>
-  </aside>
+
+  <!-- Budget mode LEFT column: the receipt (its header is the list title). -->
+  <div id="col-budgetInfo">
+    <aside id="receiptPanel">
+      <div id="receiptHead">Budget</div>
+      <div id="receiptBody"></div>
+    </aside>
+  </div>
+
+  <!-- Budget mode MIDDLE column: the purchase area (flex-grows). -->
+  <div id="col-buy">
+    <div id="buyArea"></div>
+  </div>
+
+  <!-- RIGHT column: preview (shared by both modes). -->
+  <div id="rightCol">
+    <aside id="previewPanel">
+      <div id="previewHead">
+        <span>Preview</span>
+        <button id="previewClear" title="Clear preview">✕</button>
+      </div>
+      <div id="previewBox">
+        <div id="previewEmpty">Click an image to preview it here</div>
+        <img id="previewImg" alt="">
+      </div>
+      <div id="previewName"></div>
+    </aside>
+  </div>
 </div>
 
 <div id="poolSection">
   <div id="poolHeader">
     <h2>Image Pool</h2>
-    <span class="hint">Drag images into tiers · drag back here to remove from a tier</span>
+    <span class="hint">Drag images out to place them · drag back here to remove</span>
     <div class="spacer"></div>
     <button class="tb" id="uploadBtn2">＋ Add Images</button>
     <button class="tb" id="clearPoolBtn">Clear Pool</button>
@@ -366,9 +465,12 @@
 
   let state = {
     title: "Untitled Tier List",
-    tiers: [],   // {id,name,color,items:[itemId,...]}
-    pool: [],    // itemId,...
-    images: {},  // itemId -> {id, src, name}
+    mode: "tier",       // "tier" | "budget"
+    budget: 1000,       // budget mode: starting budget
+    tiers: [],          // {id,name,color,items:[itemId,...]}
+    pool: [],           // itemId,...
+    purchased: [],      // budget mode: itemIds bought
+    images: {},         // itemId -> {id, src, name, price}
   };
   let uid = 1;
   let selectedItemId = null;
@@ -377,6 +479,7 @@
   // ---------- DOM refs ----------
   const board = document.getElementById("board");
   const pool = document.getElementById("pool");
+  const buyArea = document.getElementById("buyArea");
   const titleInput = document.getElementById("titleInput");
   const fileInput = document.getElementById("fileInput");
   const loadFileInput = document.getElementById("loadFileInput");
@@ -395,13 +498,51 @@
   }
 
   function render(){
+    normalizeState();
     titleInput.value = state.title;
     syncDocTitle();
     // drop a stale selection (e.g. after Load or Reset)
     if(selectedItemId && !state.images[selectedItemId]) selectedItemId = null;
-    renderBoard();
-    renderPool();
+    applyModeClass();
+    refresh();
     renderPreview();
+  }
+
+  // Re-render everything that depends on where items live (used after drags,
+  // price edits, buys). Cheaper than render(): doesn't touch the title field.
+  function refresh(){
+    renderBoard();
+    renderBuyArea();
+    renderPool();
+    renderReceipt();
+  }
+
+  // Fill in fields that may be missing (older saved files, fresh images).
+  function normalizeState(){
+    if(state.mode!=="budget") state.mode = "tier";
+    if(typeof state.budget!=="number" || isNaN(state.budget)) state.budget = 1000;
+    if(!Array.isArray(state.purchased)) state.purchased = [];
+    Object.values(state.images).forEach(im=>{ if(!("price" in im)) im.price = null; });
+  }
+
+  function fmtMoney(n){
+    const neg = n < 0;
+    return (neg?"-$":"$") + Math.abs(Math.round(n)).toLocaleString("en-US");
+  }
+
+  function applyModeClass(){
+    const budget = state.mode==="budget";
+    document.body.classList.toggle("mode-budget", budget);
+    document.body.classList.toggle("mode-tier", !budget);
+    document.getElementById("modeTier").classList.toggle("active", !budget);
+    document.getElementById("modeBudget").classList.toggle("active", budget);
+    const bi = document.getElementById("budgetInput");
+    if(bi) bi.value = state.budget;
+  }
+
+  function setMode(m){
+    state.mode = m;
+    render();
   }
 
   function renderBoard(){
@@ -504,8 +645,48 @@
     del.addEventListener("click", (e)=>{ e.stopPropagation(); deleteImage(itemId); });
     el.appendChild(del);
 
+    // Price badge — visible only in budget mode (CSS). Click to edit inline.
+    const price = document.createElement("div");
+    price.className = "price" + (img.price==null ? " unset" : "");
+    price.textContent = img.price==null ? "$—" : fmtMoney(img.price);
+    price.title = "Click to set price";
+    price.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      if(document.body.classList.contains("recording")) return;
+      editPrice(itemId, price, el);
+    });
+    el.appendChild(price);
+
     attachItemDnD(el, itemId);
     return el;
+  }
+
+  // Swap the price badge for an input; commit on Enter/blur, cancel on Escape.
+  function editPrice(itemId, badge, itemEl){
+    const cur = state.images[itemId].price;
+    const input = document.createElement("input");
+    input.type = "number"; input.min = "0"; input.step = "1";
+    input.className = "price-input";
+    input.value = cur==null ? "" : cur;
+    badge.replaceWith(input);
+    itemEl.draggable = false;              // stop drags starting from the field
+    input.focus(); input.select();
+    let done = false;
+    const commit = ()=>{
+      if(done) return; done = true;
+      const v = input.value.trim();
+      const num = parseFloat(v);
+      state.images[itemId].price = (v==="" || isNaN(num)) ? null : Math.max(0, Math.round(num));
+      itemEl.draggable = true;
+      refresh();          // rebuilds the thumbnail + updates budget/receipt
+      renderPreview();
+    };
+    input.addEventListener("click", (e)=>e.stopPropagation());
+    input.addEventListener("keydown", (e)=>{
+      if(e.key==="Enter"){ e.preventDefault(); input.blur(); }
+      else if(e.key==="Escape"){ done = true; itemEl.draggable = true; refresh(); }
+    });
+    input.addEventListener("blur", commit);
   }
 
   // ---------- Item helpers ----------
@@ -569,6 +750,18 @@
     moveItemTo(itemId, {type:"pool"}, beforeId);
   });
 
+  // buy area (budget mode) as a drop zone
+  buyArea.addEventListener("dragover",(e)=>{ e.preventDefault(); e.dataTransfer.dropEffect="move"; buyArea.classList.add("dragover"); });
+  buyArea.addEventListener("dragleave",(e)=>{ if(!buyArea.contains(e.relatedTarget)) buyArea.classList.remove("dragover"); });
+  buyArea.addEventListener("drop",(e)=>{
+    e.preventDefault();
+    buyArea.classList.remove("dragover");
+    const itemId = dragItemId || e.dataTransfer.getData("text/plain");
+    if(!itemId) return;
+    const beforeId = getDropTargetId(buyArea, e.clientX, e.clientY);
+    moveItemTo(itemId, {type:"buy"}, beforeId);
+  });
+
   function getDropTargetId(container, x, y){
     const els = [...container.querySelectorAll(".item")].filter(el=>el.dataset.itemId!==dragItemId);
     for(const el of els){
@@ -591,6 +784,7 @@
 
   function removeItemEverywhere(itemId){
     state.pool = state.pool.filter(id=>id!==itemId);
+    state.purchased = state.purchased.filter(id=>id!==itemId);
     state.tiers.forEach(t=>{ t.items = t.items.filter(id=>id!==itemId); });
   }
 
@@ -598,6 +792,7 @@
     removeItemEverywhere(itemId);
     let arr;
     if(dest.type==="pool") arr = state.pool;
+    else if(dest.type==="buy") arr = state.purchased;
     else arr = state.tiers.find(t=>t.id===dest.tierId).items;
     if(beforeId && beforeId!==itemId){
       const i = arr.indexOf(beforeId);
@@ -606,8 +801,7 @@
     } else {
       arr.push(itemId);
     }
-    renderBoard();
-    renderPool();
+    refresh();
   }
 
   // ---------- Tier actions ----------
@@ -646,7 +840,7 @@
       reader.onload = ()=>{
         const id = nid();
         const name = file.name.replace(/\.[^.]+$/,"");
-        state.images[id] = {id, src:reader.result, name};
+        state.images[id] = {id, src:reader.result, name, price:null};
         state.pool.push(id);
         pending--;
         if(pending===0) renderPool();
@@ -658,10 +852,76 @@
     removeItemEverywhere(itemId);
     delete state.images[itemId];
     if(selectedItemId===itemId) selectedItemId = null;
-    renderBoard();
-    renderPool();
+    refresh();
     renderPreview();
   }
+
+  // ---------- Budget mode rendering ----------
+  function budgetSpent(){
+    return state.purchased.reduce((s,id)=>{
+      const im = state.images[id];
+      return s + ((im && im.price) || 0);
+    }, 0);
+  }
+
+  function renderBuyArea(){
+    buyArea.innerHTML = "";
+    if(state.purchased.length === 0){
+      const e = document.createElement("div");
+      e.id = "buyEmpty";
+      e.textContent = "Drag items here to buy them";
+      buyArea.appendChild(e);
+    } else {
+      state.purchased.forEach(id=>{
+        const el = makeItemEl(id);
+        if(el) buyArea.appendChild(el);
+      });
+    }
+  }
+
+  function renderReceipt(){
+    // Header doubles as the list title.
+    document.getElementById("receiptHead").textContent =
+      (state.title && state.title!=="Untitled Tier List") ? state.title : "Budget";
+
+    const body = document.getElementById("receiptBody");
+    body.innerHTML = "";
+
+    // Itemised purchases first.
+    if(state.purchased.length === 0){
+      const e = document.createElement("div");
+      e.id = "receiptEmpty";
+      e.textContent = "No items purchased yet";
+      body.appendChild(e);
+    } else {
+      state.purchased.forEach(id=>{
+        const im = state.images[id];
+        if(!im) return;
+        const amt = im.price==null ? "—" : "-"+fmtMoney(im.price);
+        body.appendChild(rcRow(im.name || "Item", amt));
+      });
+    }
+
+    // Budget then Remaining, pinned to the bottom edge (remaining = budget − items).
+    const totals = document.createElement("div");
+    totals.className = "rc-totals";
+    totals.appendChild(rcHr());
+    totals.appendChild(rcRow("Budget", fmtMoney(state.budget), "rc-budget"));
+    const remaining = state.budget - budgetSpent();
+    const rem = rcRow("Remaining", fmtMoney(remaining), "rc-remaining");
+    if(remaining < 0) rem.classList.add("neg");
+    totals.appendChild(rem);
+    body.appendChild(totals);
+  }
+  function rcRow(name, amt, cls){
+    const r = document.createElement("div"); r.className = "rc-row" + (cls ? " "+cls : "");
+    const n = document.createElement("span"); n.className = "rc-name"; n.textContent = name;
+    const d = document.createElement("span"); d.className = "rc-dots";
+    const a = document.createElement("span"); a.className = "rc-amt"; a.textContent = amt;
+    r.append(n, d, a);
+    return r;
+  }
+  function rcHr(){ const h = document.createElement("div"); h.className = "rc-hr"; return h; }
 
   // ---------- Save / Load ----------
   function save(){
@@ -727,7 +987,11 @@
       img.src = rec.src;
       img.classList.add("shown");
       empty.style.display = "none";
-      nameEl.textContent = rec.name || "";
+      let label = rec.name || "";
+      if(state.mode==="budget"){
+        label += (rec.price==null ? "  ·  no price set" : "  ·  "+fmtMoney(rec.price));
+      }
+      nameEl.textContent = label;
     } else {
       img.removeAttribute("src");
       img.classList.remove("shown");
@@ -740,6 +1004,7 @@
   // Renders by measuring the live DOM, so the export matches exactly what's
   // on screen (including how images wrap). No external libraries needed.
   function exportPNG(){
+    if(state.mode==="budget"){ exportBudgetPNG(); return; }
     const tierEls = [...board.querySelectorAll(".tier")];
     if(!tierEls.length){ flash("Nothing to export."); return; }
 
@@ -837,6 +1102,91 @@
       setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
       flash("PNG exported.");
     }, "image/png");
+  }
+
+  // Receipt-style PNG for budget mode.
+  function exportBudgetPNG(){
+    const items = state.purchased.map(id=>state.images[id]).filter(Boolean);
+    const W = 640, pad = 32, rowH = 54, thumb = 40;
+    const bodyRows = Math.max(1, items.length);
+    const H = pad + 40 + 14 + (bodyRows*rowH) + 22 + 32 + 40 + pad;
+    const scale = 2;
+    const canvas = document.createElement("canvas");
+    canvas.width = W*scale; canvas.height = Math.round(H)*scale;
+    const ctx = canvas.getContext("2d");
+    ctx.scale(scale, scale);
+    ctx.fillStyle = "#1a1a1a"; ctx.fillRect(0,0,W,H);
+
+    const MONO = 'ui-monospace, Menlo, Consolas, monospace';
+    let y = pad;
+
+    // title (doubles as the receipt header)
+    ctx.fillStyle = "#fff"; ctx.textAlign = "left"; ctx.textBaseline = "top";
+    ctx.font = '700 28px -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif';
+    ctx.fillText((state.title && state.title!=="Untitled Tier List") ? state.title : "Budget", pad, y);
+    y += 40;
+
+    ctx.strokeStyle = "#3a3a3a"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pad,y); ctx.lineTo(W-pad,y); ctx.stroke(); y += 14;
+
+    // items
+    ctx.font = '500 15px '+MONO;
+    if(items.length === 0){
+      ctx.fillStyle = "#9a9a9a"; ctx.textBaseline = "middle";
+      ctx.fillText("No items purchased yet", pad, y+rowH/2);
+      ctx.textBaseline = "top"; y += rowH;
+    } else {
+      items.forEach(im=>{
+        const imgEl = document.querySelector('#buyArea .item[data-item-id="'+im.id+'"] img');
+        roundRect(ctx, pad, y, thumb, thumb, 5);
+        if(imgEl && imgEl.complete && imgEl.naturalWidth){
+          ctx.save(); ctx.clip();
+          const s = Math.max(thumb/imgEl.naturalWidth, thumb/imgEl.naturalHeight);
+          const sw = thumb/s, sh = thumb/s;
+          ctx.drawImage(imgEl, (imgEl.naturalWidth-sw)/2, (imgEl.naturalHeight-sh)/2, sw, sh, pad, y, thumb, thumb);
+          ctx.restore();
+        } else { ctx.fillStyle = "#111"; ctx.fill(); }
+        ctx.fillStyle = "#e8e8e8"; ctx.textAlign = "left"; ctx.textBaseline = "middle";
+        ctx.fillText(im.name || "Item", pad+thumb+14, y+thumb/2, W-2*pad-thumb-100);
+        ctx.textAlign = "right"; ctx.fillStyle = "#fff";
+        ctx.fillText(im.price==null ? "—" : "-"+fmtMoney(im.price), W-pad, y+thumb/2);
+        ctx.textAlign = "left"; ctx.textBaseline = "top";
+        y += rowH;
+      });
+    }
+    y += 6;
+    ctx.strokeStyle = "#3a3a3a";
+    ctx.beginPath(); ctx.moveTo(pad,y); ctx.lineTo(W-pad,y); ctx.stroke(); y += 16;
+
+    // Budget then Remaining (remaining = budget − items).
+    const remaining = state.budget - budgetSpent();
+    ctx.font = '700 18px '+MONO; ctx.fillStyle = "#e8e8e8"; ctx.textAlign = "left";
+    ctx.fillText("Budget", pad, y);
+    ctx.textAlign = "right"; ctx.fillText(fmtMoney(state.budget), W-pad, y);
+    y += 32;
+    ctx.textAlign = "left"; ctx.font = '800 24px '+MONO;
+    ctx.fillStyle = remaining < 0 ? "#ff6b6b" : "#7fff7f";
+    ctx.fillText("Remaining", pad, y);
+    ctx.textAlign = "right"; ctx.fillText(fmtMoney(remaining), W-pad, y);
+
+    canvas.toBlob(blob=>{
+      if(!blob){ flash("Export failed."); return; }
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = (state.title||"budget").replace(/[^\w\-]+/g,"_") + "_receipt.png";
+      a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+      flash("Receipt exported.");
+    }, "image/png");
+  }
+  function roundRect(ctx, x, y, w, h, r){
+    ctx.beginPath();
+    ctx.moveTo(x+r, y);
+    ctx.arcTo(x+w, y, x+w, y+h, r);
+    ctx.arcTo(x+w, y+h, x, y+h, r);
+    ctx.arcTo(x, y+h, x, y, r);
+    ctx.arcTo(x, y, x+w, y, r);
+    ctx.closePath();
   }
 
   // ---------- Templates ----------
@@ -941,7 +1291,17 @@
   }
 
   // ---------- Wire up ----------
-  titleInput.addEventListener("input", ()=>{ state.title = titleInput.value; syncDocTitle(); });
+  titleInput.addEventListener("input", ()=>{
+    state.title = titleInput.value; syncDocTitle();
+    if(state.mode==="budget") renderReceipt(); // receipt header mirrors the title
+  });
+  document.getElementById("modeTier").addEventListener("click", ()=>setMode("tier"));
+  document.getElementById("modeBudget").addEventListener("click", ()=>setMode("budget"));
+  document.getElementById("budgetInput").addEventListener("input", (e)=>{
+    const v = parseFloat(e.target.value);
+    state.budget = isNaN(v) ? 0 : Math.max(0, Math.round(v));
+    renderReceipt();
+  });
   document.getElementById("addTierBtn").addEventListener("click", ()=>addTier());
   document.getElementById("uploadBtn").addEventListener("click", ()=>fileInput.click());
   document.getElementById("uploadBtn2").addEventListener("click", ()=>fileInput.click());
