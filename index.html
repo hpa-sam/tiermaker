@@ -17,7 +17,7 @@
 <meta property="og:title" content="Tier Maker">
 <meta property="og:description" content="Build tier list ranking boards for video. No ads, no bloat.">
 <meta property="og:image" content="preview.png">
-<meta property="og:url" content="https://hpa-sam.github.io/tiermaker/">
+<meta property="og:url" content="./">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Tier Maker">
 <meta name="twitter:description" content="Build tier list ranking boards for video. No ads, no bloat.">
@@ -239,6 +239,7 @@
   /* and the "click Add Images" empty-state, which shows once everything is ranked */
   body.recording #poolEmpty{display:none;}
   body.recording #poolSection{margin-top:12px;}
+  body.recording.mode-thisthat #poolSection{display:none;} /* keep the next contender a surprise */
   body.recording #rightCol,
   body.recording #col-budgetInfo{top:44px;} /* clears the slim recording bar */
   body.recording #recBar{display:flex;}
@@ -360,10 +361,13 @@
   #col-bracket,#col-bracketPlay,#col-draftInfo,#col-draft,#col-ttInfo,#col-tt{display:none;}
   body.mode-bracket #col-board,body.mode-draft #col-board,body.mode-thisthat #col-board{display:none;}
   body.mode-bracket #rightCol{display:none;}   /* the matchup arena replaces preview */
+  body.mode-thisthat #rightCol{display:none;}  /* the VS cards are large enough */
   body.mode-bracket #col-bracket{display:flex;flex-direction:column;flex:1.5;}
   body.mode-bracket #col-bracketPlay{display:flex;flex-direction:column;flex:1;}
-  body.mode-draft #col-draftInfo,body.mode-draft #col-draft,
+  body.mode-draft #col-draft,
   body.mode-thisthat #col-ttInfo,body.mode-thisthat #col-tt{display:flex;flex-direction:column;}
+  /* Draft receipt column only appears when the budget cap is on */
+  body.mode-draft.draft-cap #col-draftInfo{display:flex;flex-direction:column;}
   body.mode-bracket #stage,body.mode-draft #stage,body.mode-thisthat #stage{align-items:stretch;}
   body.recording #col-draftInfo,body.recording #col-ttInfo,
   body.recording #rightCol{top:44px;}
@@ -442,6 +446,21 @@
   #bracketArena .tt-img{height:200px;}
   body.recording #bracketGenerate,body.recording #bracketRestart{display:none;}
 
+  /* Setups menu overlay */
+  #setupsOverlay{position:fixed;inset:0;z-index:380;display:none;align-items:center;justify-content:center;background:rgba(10,10,12,.7);}
+  #setupsOverlay.show{display:flex;}
+  #setupsPanel{background:var(--panel);border:1px solid var(--line);border-radius:12px;width:min(92vw,560px);max-height:80vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.6);}
+  #setupsHead{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line);font-size:16px;font-weight:700;}
+  #setupsHead button{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:15px;}
+  #setupsHead button:hover{color:#fff;}
+  #setupsList{padding:12px 16px;overflow:auto;display:flex;flex-direction:column;gap:8px;}
+  .setup-card{display:flex;align-items:center;gap:12px;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;}
+  .setup-info{flex:1;min-width:0;}
+  .setup-name{font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .setup-mode{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-top:2px;}
+  .setup-acts{display:flex;gap:6px;flex-shrink:0;}
+  .setup-acts .tb{font-size:12px;padding:6px 10px;}
+
   /* Winner showcase overlay + fireworks */
   #winnerOverlay{position:fixed;inset:0;z-index:400;display:none;align-items:center;justify-content:center;background:rgba(10,10,12,.86);}
   #winnerOverlay.show{display:flex;}
@@ -456,25 +475,53 @@
   #winnerClose{margin-top:18px;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:14px;font-weight:600;cursor:pointer;}
   #winnerClose:hover{filter:brightness(1.08);}
 
-  /* ---- Draft ---- */
-  #draftArea{display:flex;flex-direction:column;gap:8px;}
-  .draft-slot{display:flex;align-items:stretch;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px;}
-  .draft-slot-label{flex:0 0 150px;display:flex;align-items:center;}
+  /* ---- Draft (card grid) ---- */
+  #draftArea{
+    flex:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));
+    gap:10px;align-content:start;overflow:auto;padding:14px;
+  }
+  .draft-slot{display:flex;flex-direction:column;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px;}
+  .draft-slot-head{display:flex;align-items:center;gap:4px;}
+  .draft-slot-label{flex:1;min-width:0;}
   .draft-slot-label input{
     width:100%;background:transparent;border:none;color:var(--text);font-size:14px;font-weight:600;
     padding:4px 6px;border-radius:5px;
   }
   .draft-slot-label input:hover{background:var(--panel-2);}
   .draft-slot-label input:focus{outline:1px solid var(--accent);background:var(--panel-2);}
-  .draft-drop{flex:1;min-height:52px;border:1px dashed #444;border-radius:6px;display:flex;align-items:center;gap:8px;padding:5px;}
-  .draft-drop.dragover{background:#2d3a4d;border-color:var(--accent);}
-  .draft-drop .placeholder{color:#666;font-size:12px;padding:0 6px;}
-  .draft-price{margin-left:auto;font-size:13px;font-weight:700;color:#7fff7f;white-space:nowrap;padding-right:6px;}
-  .draft-slot-ctrl{display:flex;align-items:center;gap:2px;}
+  .draft-slot-ctrl{display:flex;align-items:center;gap:2px;flex:0 0 auto;}
   .draft-slot-ctrl button{background:transparent;border:none;color:#cfcfcf;cursor:pointer;width:24px;height:24px;border-radius:5px;font-size:13px;}
   .draft-slot-ctrl button:hover{background:#2c2c2c;color:#fff;}
-  #draftAddSlot{align-self:flex-start;margin-top:4px;background:var(--panel);border:1px dashed var(--line);color:var(--muted);padding:8px 12px;border-radius:8px;cursor:pointer;font-size:13px;}
+  .draft-drop{
+    flex:1;min-height:150px;border:1px dashed #444;border-radius:8px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:8px;text-align:center;
+  }
+  .draft-drop.dragover{background:#2d3a4d;border-color:var(--accent);}
+  .draft-drop .placeholder{color:#666;font-size:12px;}
+  .draft-price{font-size:13px;font-weight:700;color:#7fff7f;}
+  #draftAddSlot{
+    grid-column:1/-1;justify-self:start;background:var(--panel);border:1px dashed var(--line);
+    color:var(--muted);padding:8px 12px;border-radius:8px;cursor:pointer;font-size:13px;
+  }
   #draftAddSlot:hover{color:var(--text);border-color:#555;}
+  .draft-slot.active-draft{border-color:var(--accent);box-shadow:0 0 0 2px rgba(74,158,255,.3);}
+
+  /* Draft tabbed pool (one tab per slot) */
+  #poolTabs{display:none;gap:4px;flex-wrap:wrap;margin-bottom:8px;}
+  .poolTab{
+    background:var(--panel-2);color:var(--muted);border:1px solid var(--line);border-bottom:none;
+    border-radius:7px 7px 0 0;padding:6px 12px;font-size:12px;cursor:pointer;
+  }
+  .poolTab:hover{color:var(--text);}
+  .poolTab.active{background:var(--panel);color:#fff;font-weight:600;}
+  .poolTab.dragover{background:#2d3a4d;border-color:var(--accent);color:#fff;}
+
+  /* Larger vertical card thumbnail (used in draft slots) */
+  .card-thumb{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:grab;user-select:none;width:100%;}
+  .card-thumb img{max-width:100%;max-height:110px;object-fit:contain;border-radius:6px;background:#fff;pointer-events:none;}
+  .card-thumb-name{font-size:12px;color:var(--text);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+  .card-thumb.dragging{opacity:.4;}
+  .card-thumb.selected{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px;}
 
   /* ---- This / That ---- */
   #ttArena{
@@ -532,6 +579,8 @@
   <button class="tb" id="exportBtn">🖼 Export PNG</button>
   <button class="tb" id="saveBtn">💾 Save</button>
   <button class="tb" id="loadBtn">📂 Load</button>
+  <button class="tb" id="ghSaveBtn">☁ Save to GitHub</button>
+  <button class="tb" id="setupsBtn">🗂 Setups</button>
   <button class="tb primary" id="recordBtn">● Recording Mode</button>
 </div>
 </header>
@@ -586,7 +635,10 @@
     </aside>
   </div>
   <div id="col-draft">
-    <div class="playArea" id="draftArea"></div>
+    <aside class="infoPanel">
+      <div class="infoHead" id="draftMainHead">Draft</div>
+      <div id="draftArea"></div>
+    </aside>
   </div>
 
   <!-- THIS/THAT mode: left = champion + defeated; middle = A vs B. -->
@@ -625,12 +677,20 @@
     <button class="tb" id="uploadBtn2">＋ Add Images</button>
     <button class="tb" id="clearPoolBtn">Clear Pool</button>
   </div>
+  <div id="poolTabs"></div>
   <div id="pool"></div>
 </div>
 
 <div id="recBar">
   <span id="recBarLabel">Recording mode — crop this bar out of your capture</span>
   <button id="recExit">✕ Exit</button>
+</div>
+
+<div id="setupsOverlay">
+  <div id="setupsPanel">
+    <div id="setupsHead"><span>Saved setups</span><button id="setupsClose">✕</button></div>
+    <div id="setupsList"></div>
+  </div>
 </div>
 
 <div id="winnerOverlay">
@@ -776,6 +836,10 @@
     if(!Array.isArray(state.thisThat.defeated)) state.thisThat.defeated = [];
     if(!state.draft || typeof state.draft!=="object") state.draft = {slots:[], budgetOn:false};
     if(!Array.isArray(state.draft.slots) || state.draft.slots.length===0) state.draft.slots = defaultDraftSlots();
+    // active pool tab must be a real slot (or the "unsorted" bucket)
+    if(state.draft.activeSlotId!=="__unsorted" && !state.draft.slots.some(s=>s.id===state.draft.activeSlotId)){
+      state.draft.activeSlotId = state.draft.slots[0] ? state.draft.slots[0].id : "__unsorted";
+    }
     Object.values(state.images).forEach(im=>{ if(!("price" in im)) im.price = null; });
   }
 
@@ -862,18 +926,58 @@
   }
 
   function renderPool(){
+    const draft = state.mode==="draft";
+    const tabsEl = document.getElementById("poolTabs");
+    if(draft){ tabsEl.style.display = "flex"; renderPoolTabs(); }
+    else tabsEl.style.display = "none";
+
     pool.innerHTML = "";
-    if(state.pool.length === 0){
+    let ids = state.pool;
+    if(draft) ids = state.pool.filter(id=>draftGroupOf(id)===state.draft.activeSlotId);
+
+    if(ids.length === 0){
       const empty = document.createElement("div");
       empty.id = "poolEmpty";
-      empty.textContent = "No images yet — click “Add Images” to upload a pool of images to rank.";
+      empty.textContent = draft
+        ? "No images in this pool yet — with this tab active, click “Add Images”."
+        : "No images yet — click “Add Images” to upload a pool of images to rank.";
       pool.appendChild(empty);
     } else {
-      state.pool.forEach(itemId=>{
+      ids.forEach(itemId=>{
         const el = makeItemEl(itemId);
         if(el) pool.appendChild(el);
       });
     }
+  }
+  // Which draft tab a pooled image belongs to (falls back to the "unsorted" bucket).
+  function draftGroupOf(id){
+    const g = state.images[id] && state.images[id].group;
+    if(g && state.draft.slots.some(s=>s.id===g)) return g;
+    return "__unsorted";
+  }
+  function renderPoolTabs(){
+    const el = document.getElementById("poolTabs");
+    el.innerHTML = "";
+    const active = state.draft.activeSlotId;
+    const makeTab = (id, label)=>{
+      const t = document.createElement("button");
+      t.className = "poolTab" + (id===active ? " active" : "");
+      const count = state.pool.filter(x=>draftGroupOf(x)===id).length;
+      t.textContent = label + (count ? " (" + count + ")" : "");
+      t.addEventListener("click", ()=>setActiveDraftSlot(id));
+      attachDropZone(t, (dropId)=>setImageGroup(dropId, id==="__unsorted" ? null : id));
+      return t;
+    };
+    state.draft.slots.forEach(s=> el.appendChild(makeTab(s.id, s.label || "Slot")));
+    if(state.pool.some(x=>draftGroupOf(x)==="__unsorted")) el.appendChild(makeTab("__unsorted", "Unsorted"));
+  }
+  function setActiveDraftSlot(id){ state.draft.activeSlotId = id; refresh(); }
+  function setImageGroup(id, group){
+    if(!state.images[id]) return;
+    removeItemEverywhere(id);          // pull out of pool / any slot
+    state.images[id].group = group;    // null = unsorted
+    state.pool.push(id);
+    refresh();
   }
 
   function makeItemEl(itemId){
@@ -966,6 +1070,26 @@
     c.appendChild(nm);
     attachItemDnD(c, itemId);
     return c;
+  }
+
+  // A larger vertical card thumbnail (draft slots): big image + name below.
+  function makeCardThumb(itemId){
+    const img = state.images[itemId];
+    if(!img) return null;
+    const el = document.createElement("div");
+    el.className = "card-thumb" + (itemId===selectedItemId ? " selected" : "");
+    el.draggable = true;
+    el.dataset.itemId = itemId;
+    el.title = img.name || "";
+    el.addEventListener("click", ()=>selectItem(itemId));
+    const im = document.createElement("img");
+    im.src = img.src; im.alt = img.name || "";
+    el.appendChild(im);
+    const nm = document.createElement("div");
+    nm.className = "card-thumb-name"; nm.textContent = img.name || "";
+    el.appendChild(nm);
+    attachItemDnD(el, itemId);
+    return el;
   }
 
   // ---------- Item helpers ----------
@@ -1136,7 +1260,12 @@
       reader.onload = ()=>{
         const id = nid();
         const name = file.name.replace(/\.[^.]+$/,"");
-        state.images[id] = {id, src:reader.result, name, price:null};
+        const rec = {id, src:reader.result, name, price:null};
+        // In draft mode, new uploads join the active tab's pool.
+        if(state.mode==="draft" && state.draft.activeSlotId && state.draft.activeSlotId!=="__unsorted"){
+          rec.group = state.draft.activeSlotId;
+        }
+        state.images[id] = rec;
         state.pool.push(id);
         pending--;
         if(pending===0) refresh(); // update the active mode too (e.g. auto-start This/That)
@@ -1411,7 +1540,8 @@
     return {spent, remaining: state.budget - spent};
   }
   function renderDraft(){
-    document.getElementById("draftHead").textContent = titleOr("Draft");
+    document.getElementById("draftMainHead").textContent = titleOr("Draft");
+    document.getElementById("draftHead").textContent = "Budget";
     const info = document.getElementById("draftInfoBody");
     info.innerHTML = "";
     const filled = state.draft.slots.filter(s=>s.itemId).length;
@@ -1430,15 +1560,27 @@
     const area = document.getElementById("draftArea");
     area.innerHTML = "";
     state.draft.slots.forEach((slot, idx)=>{
-      const row = document.createElement("div"); row.className = "draft-slot";
+      const cardEl = document.createElement("div");
+      cardEl.className = "draft-slot" + (slot.id===state.draft.activeSlotId ? " active-draft" : "");
+      // Clicking anywhere on the card makes its pool tab active.
+      cardEl.addEventListener("click", ()=>setActiveDraftSlot(slot.id));
+
+      const head = document.createElement("div"); head.className = "draft-slot-head";
       const lab = document.createElement("div"); lab.className = "draft-slot-label";
       const inp = document.createElement("input"); inp.value = slot.label; inp.spellcheck = false;
       inp.addEventListener("input", ()=>{ slot.label = inp.value; });
-      lab.appendChild(inp); row.appendChild(lab);
+      lab.appendChild(inp);
+      const ctrl = document.createElement("div"); ctrl.className = "draft-slot-ctrl";
+      ctrl.addEventListener("click", (e)=>e.stopPropagation()); // don't trigger card activate
+      ctrl.appendChild(iconBtn("▲","Move up",()=>moveDraftSlot(idx,-1)));
+      ctrl.appendChild(iconBtn("▼","Move down",()=>moveDraftSlot(idx,1)));
+      ctrl.appendChild(iconBtn("🗑","Remove slot",()=>removeDraftSlot(idx)));
+      head.append(lab, ctrl);
+      cardEl.appendChild(head);
 
       const drop = document.createElement("div"); drop.className = "draft-drop";
       if(slot.itemId && state.images[slot.itemId]){
-        drop.appendChild(makeChip(slot.itemId));
+        drop.appendChild(makeCardThumb(slot.itemId));
         if(state.draft.budgetOn){
           const pr = document.createElement("div"); pr.className = "draft-price";
           const p = state.images[slot.itemId].price;
@@ -1450,14 +1592,8 @@
         drop.appendChild(ph);
       }
       attachDropZone(drop, (id)=>draftAssign(slot.id, id));
-      row.appendChild(drop);
-
-      const ctrl = document.createElement("div"); ctrl.className = "draft-slot-ctrl";
-      ctrl.appendChild(iconBtn("▲","Move up",()=>moveDraftSlot(idx,-1)));
-      ctrl.appendChild(iconBtn("▼","Move down",()=>moveDraftSlot(idx,1)));
-      ctrl.appendChild(iconBtn("🗑","Remove slot",()=>removeDraftSlot(idx)));
-      row.appendChild(ctrl);
-      area.appendChild(row);
+      cardEl.appendChild(drop);
+      area.appendChild(cardEl);
     });
 
     const add = document.createElement("button"); add.id = "draftAddSlot"; add.textContent = "＋ Add slot";
@@ -1484,6 +1620,8 @@
     if(s.itemId) state.pool.push(s.itemId);
     state.draft.slots.splice(idx,1);
     if(state.draft.slots.length===0) state.draft.slots.push({id:nid(), label:"Slot", itemId:null});
+    // if the removed slot's tab was active, fall back to the first slot
+    if(state.draft.activeSlotId===s.id) state.draft.activeSlotId = state.draft.slots[0].id;
     refresh();
   }
 
@@ -1671,10 +1809,10 @@
     renderPreview();
   }
   function applySelectionStyles(){
-    document.querySelectorAll(".item.selected,.chip.selected").forEach(el=>el.classList.remove("selected"));
+    document.querySelectorAll(".item.selected,.chip.selected,.card-thumb.selected").forEach(el=>el.classList.remove("selected"));
     if(!selectedItemId) return;
     document.querySelectorAll('[data-item-id="'+selectedItemId+'"]').forEach(el=>{
-      if(el.classList.contains("item") || el.classList.contains("chip")) el.classList.add("selected");
+      if(el.classList.contains("item") || el.classList.contains("chip") || el.classList.contains("card-thumb")) el.classList.add("selected");
     });
   }
   function renderPreview(){
@@ -1986,6 +2124,114 @@
     clearTimeout(el.__t); el.__t=setTimeout(()=>{el.style.opacity="0";},1800);
   }
 
+  // ---------- Save to GitHub + Setups menu ----------
+  const GH_OWNER = "hpa-sam", GH_REPO = "tiermaker", GH_BRANCH = "main";
+  const GH_TOKEN_KEY = "tiermaker_gh_token";
+  let _setupsCache = null;
+
+  function ghUrl(path){ return "https://api.github.com/repos/"+GH_OWNER+"/"+GH_REPO+"/contents/"+path; }
+  function ghHeaders(token){ return {"Authorization":"Bearer "+token, "Accept":"application/vnd.github+json", "X-GitHub-Api-Version":"2022-11-28"}; }
+  function b64encode(str){ return btoa(unescape(encodeURIComponent(str))); }
+  function b64decode(str){ return decodeURIComponent(escape(atob(str.replace(/\s/g,"")))); }
+  function shareLink(slug){ return location.origin + location.pathname + "?project=" + encodeURIComponent(slug); }
+  function slugify(s){ return (s||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"") || "setup"; }
+
+  function ensureToken(){
+    let t = localStorage.getItem(GH_TOKEN_KEY);
+    if(!t){
+      t = prompt("Paste a GitHub fine-grained personal access token with Contents: Read & Write on "
+                 + GH_OWNER + "/" + GH_REPO + ".\n\nIt is stored only in this browser and never uploaded or committed.");
+      if(t){ t = t.trim(); localStorage.setItem(GH_TOKEN_KEY, t); }
+    }
+    return t;
+  }
+  async function ghGetSha(path, token){
+    const r = await fetch(ghUrl(path) + "?ref=" + GH_BRANCH, {headers: ghHeaders(token)});
+    if(r.status === 404) return null;
+    if(!r.ok) throw new Error("HTTP " + r.status);
+    return (await r.json()).sha;
+  }
+  async function ghPut(path, contentStr, message, token, sha){
+    const body = {message, content: b64encode(contentStr), branch: GH_BRANCH};
+    if(sha) body.sha = sha;
+    const r = await fetch(ghUrl(path), {method:"PUT", headers: ghHeaders(token), body: JSON.stringify(body)});
+    if(!r.ok) throw new Error("HTTP " + r.status);
+    return r.json();
+  }
+  async function updateManifest(entry, token){
+    const path = "projects/index.json";
+    let list = [], sha = null;
+    try{
+      const r = await fetch(ghUrl(path) + "?ref=" + GH_BRANCH, {headers: ghHeaders(token)});
+      if(r.ok){ const j = await r.json(); sha = j.sha; list = (JSON.parse(b64decode(j.content)).setups) || []; }
+    }catch(e){ /* first save: no manifest yet */ }
+    list = list.filter(s=>s.file !== entry.file);
+    list.unshift(entry);
+    await ghPut(path, JSON.stringify({setups:list}, null, 2), "Update setups index", token, sha);
+    _setupsCache = list;
+  }
+  async function ghSaveSetup(){
+    state.title = titleInput.value;
+    const name = prompt("Name this setup (shows in the Setups menu):", titleOr("Setup"));
+    if(name === null) return;
+    const disp = name.trim() || "Untitled setup";
+    const slug = slugify(disp);
+    const token = ensureToken();
+    if(!token) return;
+    flash("Saving to GitHub…");
+    try{
+      const sha = await ghGetSha("projects/" + slug + ".json", token);
+      await ghPut("projects/" + slug + ".json", JSON.stringify(state), "Save setup: " + disp, token, sha);
+      await updateManifest({file:slug, name:disp, mode:state.mode, savedAt:new Date().toISOString()}, token);
+      const link = shareLink(slug);
+      try{ await navigator.clipboard.writeText(link); flash("Saved ✓ — link copied to clipboard"); }
+      catch(e){ flash("Saved ✓ — " + link); }
+    }catch(e){
+      if(/\b(401|403)\b/.test(e.message)){
+        localStorage.removeItem(GH_TOKEN_KEY);
+        alert("GitHub rejected the token. It has been cleared — try again with a fine-grained token that has Contents: Read & Write on " + GH_OWNER + "/" + GH_REPO + ".");
+      } else {
+        alert("Save failed: " + e.message);
+      }
+    }
+  }
+
+  function openSetups(){
+    document.getElementById("setupsOverlay").classList.add("show");
+    const listEl = document.getElementById("setupsList");
+    listEl.innerHTML = "<div class='tt-msg'>Loading…</div>";
+    fetch("projects/index.json?_=" + Date.now())
+      .then(r=> r.ok ? r.json() : (r.status===404 ? {setups:[]} : Promise.reject(new Error("HTTP "+r.status))))
+      .then(j=>{ _setupsCache = j.setups || []; renderSetups(_setupsCache); })
+      .catch(()=> renderSetups(_setupsCache || []));
+  }
+  function renderSetups(list){
+    const el = document.getElementById("setupsList");
+    el.innerHTML = "";
+    if(!list || !list.length){
+      el.innerHTML = "<div class='tt-msg'>No saved setups yet. Build one and click “Save to GitHub”.</div>";
+      return;
+    }
+    list.forEach(s=>{
+      const card = document.createElement("div"); card.className = "setup-card";
+      const info = document.createElement("div"); info.className = "setup-info";
+      const nm = document.createElement("div"); nm.className = "setup-name"; nm.textContent = s.name || s.file;
+      const md = document.createElement("div"); md.className = "setup-mode"; md.textContent = (s.mode || "tier").replace("thisthat","This / That");
+      info.append(nm, md);
+      const acts = document.createElement("div"); acts.className = "setup-acts";
+      const open = document.createElement("button"); open.className = "tb"; open.textContent = "Open";
+      open.addEventListener("click", ()=>{ location.href = shareLink(s.file); });
+      const rec = document.createElement("button"); rec.className = "tb"; rec.textContent = "Open + Record";
+      rec.addEventListener("click", ()=>{ location.href = shareLink(s.file) + "&record=1"; });
+      const cp = document.createElement("button"); cp.className = "tb"; cp.textContent = "Copy link";
+      cp.addEventListener("click", ()=>{ (navigator.clipboard ? navigator.clipboard.writeText(shareLink(s.file)) : 0); flash("Link copied."); });
+      acts.append(open, rec, cp);
+      card.append(info, acts);
+      el.appendChild(card);
+    });
+  }
+  function closeSetups(){ document.getElementById("setupsOverlay").classList.remove("show"); }
+
   // ---------- Recording mode ----------
   function toggleRecording(){
     document.body.classList.toggle("recording");
@@ -1999,7 +2245,7 @@
     // every mode's panel header mirrors the title
     document.getElementById("receiptHead").textContent = titleOr("Budget");
     document.getElementById("bracketHead").textContent = titleOr("Bracket");
-    document.getElementById("draftHead").textContent = titleOr("Draft");
+    document.getElementById("draftMainHead").textContent = titleOr("Draft");
     document.getElementById("ttHead").textContent = titleOr("This / That");
   });
   document.querySelectorAll(".modeTab").forEach(b=>b.addEventListener("click", ()=>setMode(b.dataset.mode)));
@@ -2056,6 +2302,10 @@
     r.readAsText(f);
     loadFileInput.value="";
   });
+  document.getElementById("ghSaveBtn").addEventListener("click", ghSaveSetup);
+  document.getElementById("setupsBtn").addEventListener("click", openSetups);
+  document.getElementById("setupsClose").addEventListener("click", closeSetups);
+  document.getElementById("setupsOverlay").addEventListener("click", (e)=>{ if(e.target.id==="setupsOverlay") closeSetups(); });
   document.getElementById("recordBtn").addEventListener("click", toggleRecording);
   document.getElementById("recExit").addEventListener("click", toggleRecording);
   document.getElementById("templateSelect").addEventListener("change", onTemplateSelect);
