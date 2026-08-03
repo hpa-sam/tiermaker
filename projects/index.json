@@ -1,6 +1,12 @@
 {
   "setups": [
     {
+      "file": "cad-software-tools-ranked",
+      "name": "CAD Software Tools - Ranked",
+      "mode": "tier",
+      "savedAt": "2026-08-03T21:33:10.312Z"
+    },
+    {
       "file": "home-workshop-powertools-budget",
       "name": "Home Workshop Powertools - Budget",
       "mode": "budget",
