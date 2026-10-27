@@ -1,6 +1,12 @@
 {
   "setups": [
     {
+      "file": "setup",
+      "name": "Setup",
+      "mode": "tier",
+      "savedAt": "2026-10-27T19:33:15.681Z"
+    },
+    {
       "file": "cad-software-tools-ranked",
       "name": "CAD Software Tools - Ranked",
       "mode": "tier",
